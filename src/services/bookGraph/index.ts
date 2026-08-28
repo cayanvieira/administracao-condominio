@@ -3,10 +3,11 @@ import { buildGraph } from "../../graph/factory.ts";
 
 const graph = buildGraph();
 
-export class AppointmentGraphService {
-  async handleQuestion(question: string) {
+export class BookGraphService {
+  async handleQuestion(question: string, userId?: number) {
     const response = await graph.invoke({
       messages: [new HumanMessage(question)],
+      author: userId 
     });
     return response;
   }
