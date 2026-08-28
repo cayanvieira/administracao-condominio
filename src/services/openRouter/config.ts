@@ -1,11 +1,14 @@
-const apiKey = process.env.OPENROUTER_API_KEY
+const openRouterApiKey = process.env.OPENROUTER_API_KEY
 
-if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not set. Run the app with --env-file .env or configure the environment variable.')
+
+
+if (!openRouterApiKey) {
+    throw new Error('One or more required API keys are not set. Run the app with --env-file .env or configure the environment variable.')
 }
 
+
 export type ModelConfig = {
-    apiKey: string;
+    openRouterApiKey: string;
     httpReferer: string,
     port: number;
     models: string[];
@@ -22,7 +25,7 @@ export type ModelConfig = {
 }
 
 export const config: ModelConfig = {
-    apiKey,
+    openRouterApiKey,
     httpReferer: '',
     appTitle: 'Answering questions with an LLM',
     port: Number(process.env.PORT) || 3001,
@@ -30,7 +33,7 @@ export const config: ModelConfig = {
         "cohere/north-mini-code:free",
     ],
     temperature: 0.4,
-    maxTokens: 300,
+    maxTokens: 1000,
     systemPrompt: 'You are a helpful assistant.',
     provider: {
         sort: {
@@ -39,5 +42,6 @@ export const config: ModelConfig = {
             // by: 'price',
             partition: 'none'
         }
-    }
+    },
+    
 }

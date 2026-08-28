@@ -1,7 +1,7 @@
-import { buildAppointmentGraph } from './graph.ts';
+import { buildBookGraph } from './graph.ts';
 
 export function buildGraph() {
-  return buildAppointmentGraph();
+  return buildBookGraph();
 }
 
 export const graph = async () => {

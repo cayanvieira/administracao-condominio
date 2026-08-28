@@ -1,5 +1,5 @@
 import knex from 'knex'
-import databaseConfig from './config.js'
+import databaseConfig from './config.ts'
 
 const database = knex(databaseConfig)
 

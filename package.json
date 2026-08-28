@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node --env-file .env src/index.ts",
     "dev": "node --env-file .env --watch src/index.ts",
-    "db:migrate": "knex --knexfile knexfile.js migrate:latest",
-    "db:rollback": "knex --knexfile knexfile.js migrate:rollback"
+    "db:migrate": "node src/database/migrate.ts latest",
+    "db:rollback": "node src/database/migrate.ts rollback"
   },
   "type": "module",
   "keywords": [],
