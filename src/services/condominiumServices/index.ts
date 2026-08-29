@@ -4,14 +4,14 @@ export type CondominiumService = {
   id: number
   name: string
   minimum_hours: number
-  can_book: boolean
+  can_schedule: boolean
   created_at: Date
   updated_at: Date
 }
 
 export type CreateCondominiumService = Pick<
   CondominiumService,
-  'name' | 'minimum_hours' | 'can_book'
+  'name' | 'minimum_hours' | 'can_schedule'
 >
 export type UpdateCondominiumService = Partial<CreateCondominiumService>
 

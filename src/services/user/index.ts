@@ -20,11 +20,11 @@ export class UserService {
   }
 
   async findAllUsers(): Promise<User[]> {
-    return this.database<User>('usuarios').select('*')
+    return this.database<User>('users').select('*')
   }
 
   async findUserById(id: number): Promise<User> {
-    const user = await this.database<User>('usuarios').where({ id }).first()
+    const user = await this.database<User>('users').where({ id }).first()
     if (!user) {
       throw new Error('User not found')
     }
@@ -32,7 +32,7 @@ export class UserService {
   }
 
   async createUser(user: CreateUser): Promise<User> {
-    const [createdUser] = await this.database<User>('usuarios')
+    const [createdUser] = await this.database<User>('users')
       .insert(user)
       .returning('*')
 
@@ -40,7 +40,7 @@ export class UserService {
   }
 
   async updateUser(id: number, user: UpdateUser): Promise<User | undefined> {
-    const [updatedUser] = await this.database<User>('usuarios')
+    const [updatedUser] = await this.database<User>('users')
       .where({ id })
       .update(user)
       .returning('*')
@@ -49,7 +49,7 @@ export class UserService {
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    const deletedRows = await this.database<User>('usuarios').where({ id }).del()
+    const deletedRows = await this.database<User>('users').where({ id }).del()
     return deletedRows > 0
   }
 }

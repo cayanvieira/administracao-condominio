@@ -6,7 +6,7 @@ export const IntentSchema = z.object({
   serviceId: z.number().optional().describe('The ID of the service to book or cancel'),
   serviceName: z.string().optional().describe('The name of the service to book or cancel'),
   userName: z.string().optional().describe('The name of the user making the request'),
-  datetime: z.string().optional().describe('Book date and time in ISO format'),
+  datetimeToSchedule: z.string().optional().describe('Book date and time in ISO format'),
   reason: z.string().optional().describe('Reason for book (for scheduling)'),
 });
 
@@ -24,7 +24,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
       schedule: {
         description: 'User wants to book/schedule a new service',
         keywords: ['schedule', 'book', 'I want to', 'make an book'],
-        required_fields: ['service', 'datetime'],
+        required_fields: ['serviceName', 'datetime', 'userName'],
         optional_fields: ['reason',"document"]
       },
       cancel: {
