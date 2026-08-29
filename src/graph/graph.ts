@@ -4,6 +4,8 @@ import { withLangGraph } from "@langchain/langgraph/zod";
 import type { BaseMessage } from "@langchain/core/messages";
 
 import { createIdentifyIntentNode } from "./nodes/identifyIntentNode.ts";
+// import { createSchedulerNode } from "./nodes/schedulerNode.ts";
+// import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 
 const BookGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
@@ -24,7 +26,28 @@ export function buildBookGraph() {
     stateSchema: BookGraphSchema,
   })
     .addNode("identifyIntent", createIdentifyIntentNode())
+    // .addNode('schedule', createSchedulerNode())
+    // .addNode('message', createMessageGeneratorNode())
     .addEdge(START, "identifyIntent")
+    // .addConditionalEdges(
+    //   'identifyIntent',
+    //   (state: GraphState): string => {
+    //     if (state.error || !state.intent || state.intent === 'unknown') {
+    //       return 'message';
+    //     }
+
+    //     console.log(`➡️  Routing based on intent: ${state.intent}`);
+    //     return state.intent
+    //   },
+    //   {
+    //     schedule: 'schedule',
+    //     // cancel: 'cancel',
+    //     // message: 'message',
+    //   }
+    // )
+    // .addEdge('schedule', 'message')
+    
+    // .addEdge("message", END);
     .addEdge("identifyIntent", END);
   return workflow.compile();
 }

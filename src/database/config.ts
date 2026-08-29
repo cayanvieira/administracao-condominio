@@ -12,6 +12,10 @@ const databaseConfig = {
   migrations: {
     directory: './src/database/migrations',
     loadExtensions: ['.js']
+  },
+  seeds: {
+    directory: './src/database/seeds',
+    loadExtensions: ['.js']
   }
 }
 

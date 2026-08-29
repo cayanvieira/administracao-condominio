@@ -46,7 +46,7 @@ export class OpenRouterService {
 
       if (choice.finishReason === "length") {
         throw new Error(
-          "A resposta excedeu o limite de tokens antes de gerar o conteúdo.",
+          "The response exceeded the token limit before generating the content.",
         );
       }
       const content = (response.choices.at(0)?.message.content) ?? "" ;

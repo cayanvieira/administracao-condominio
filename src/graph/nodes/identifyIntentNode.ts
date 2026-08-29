@@ -7,10 +7,7 @@ export function createIdentifyIntentNode() {
  
   return async (state: GraphState): Promise<GraphState> => {
     const Service = new Services();
-    console.log(`🔍 Identifying intent...`);
-    
     const input = state.messages.at(-1)!.text;
-   
     const systemPrompt = getSystemPrompt(await Service.CondominiumServices.findAllServices(), await Service.User.findUserById(state.author));
     const userPrompt = getUserPromptTemplate(input);
     const data = await Service.OpenRouter.generate(
