@@ -2,24 +2,27 @@ import { z } from 'zod';
 import { type User } from '../../services/user/index.ts';
 
 export const IntentSchema = z.object({
-  intent: z.enum([ "schedule", "cancel", "consult", "unknown", "notify", "complaint"]).describe('The user intent'),
-  serviceId: z.number().optional().describe('The ID of the service to book or cancel'),
-  serviceName: z.string().optional().describe('The name of the service to book or cancel'),
-  userName: z.string().optional().describe('The name of the user making the request'),
-  datetimeToSchedule: z.string().optional().describe('Book date and time in ISO format'),
-  reason: z.string().optional().describe('Reason for book (for scheduling)'),
+  intent: z.enum(["schedule", "cancel", "consult", "unknown", "notify", "complaint"]).nullable().describe('The user intent'),
+  serviceId: z.number().nullable().describe('The ID of the service or area requested'),
+  serviceName: z.string().nullable().describe('The name of the service or area requested'),
+  userName: z.string().nullable().describe('The name of the user making the request'),
+  userId: z.number().nullable().describe('The ID of the user making the request'),
+  datetime: z.string().nullable().describe('Date and time in ISO format when relevant'),
+  reason: z.string().nullable().describe('Reason for the request when relevant'),
+  document: z.string().nullable().optional().describe('Document number when explicitly informed'),
 });
 
 export type IntentData = z.infer<typeof IntentSchema>;
 
-export const getSystemPrompt = (services: any[],user: User) => {
+export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
   return JSON.stringify({
     role: 'Intent Classifier for Condominium Books',
     task: 'Identify user intent and extract all book-related details',
     services: services.map(s => ({ id: s.id, name: s.name, document: s.document, role: s.role })),
     users: user,
+    oldData: oldData,
     current_date: new Date().toISOString(),
-    important:"return only a json object with the fields that are present in the question. Do not include any extra fields or explanations.",
+    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, datetime, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations.",
     rules: {
       schedule: {
         description: 'User wants to book/schedule a new service',
@@ -39,38 +42,113 @@ export const getSystemPrompt = (services: any[],user: User) => {
       }
     },
     extraction_instructions: {
-      userName: 'Match the user name mentioned in the question to the ID from the professionals list. Use fuzzy matching.',
-      serviceName: 'Extract the service name as mentioned by the user',
+      userId: 'Use the current authenticated user ID when available. If the message does not explicitly provide an ID, keep the value as the current user id from the session context.',
+      userName: 'Extract the user name if mentioned; otherwise keep the same as the current user name when available.',
+      serviceId: 'If the user mentions a service or area name, match it to the nearest service in the services list and return its id. If not found, set null.',
+      serviceName: 'Extract the service or area name as mentioned by the user. If not present, set null.',
       datetime: 'Parse relative dates (today, tomorrow) and times. Convert to ISO format. Use current_date as reference.',
-      document: 'Extract the user document number from the question or context.',
-      reason: 'Extract the reason/purpose for the book (only for scheduling)'
+      document: 'Extract the user document number from the question or context. If not present, set null.',
+      reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.'
     },
-    // examples: [
-    //   {
-    //     input: 'I want to schedule with Dr. Alicio da Silva for tomorrow at 4pm for a check-up',
-    //     output: { intent: 'schedule', professionalId: 1, professionalName: 'Dr. Alicio da Silva', datetime: '2026-02-12T16:00:00.000Z', reason: 'check-up' }
-    //   },
-    //   {
-    //     input: 'Cancel my book with Dr. Ana Pereira today at 11am',
-    //     output: { intent: 'cancel', professionalId: 2, professionalName: 'Dr. Ana Pereira', datetime: '2026-02-11T11:00:00.000Z' }
-    //   },
-    //   {
-    //     input: 'What is the weather today?',
-    //     output: { intent: 'unknown' }
-    //   }
-    // ]
+    examples: [
+      {
+        input: 'I want to book the party room for tomorrow at 7 PM to celebrate my birthday.',
+        output: {
+          intent: 'schedule',
+          serviceId: 1,
+          serviceName: 'Salão de festas',
+          userName: 'João da Silva',
+          userId: 10,
+          datetime: '2026-09-05T19:00:00.000Z',
+          reason: 'comemorar meu aniversário',
+          document: null,
+        },
+      },
+      {
+        input: 'I would like to cancel my barbecue area reservation today at noon.',
+        output: {
+          intent: 'cancel',
+          serviceId: 2,
+          serviceName: 'Churrasqueira',
+          userName: 'Maria Oliveira',
+          userId: 11,
+          datetime: '2026-09-04T12:00:00.000Z',
+          reason: null,
+          document: null,
+        },
+      },
+      {
+        input: 'Can I book the swimming pool for Saturday at 10 AM?',
+        output: {
+          intent: 'schedule',
+          serviceId: 3,
+          serviceName: 'Piscina',
+          userName: 'Carlos Souza',
+          userId: 12,
+          datetime: '2026-09-05T10:00:00.000Z',
+          reason: null,
+          document: null,
+        },
+      },
+      {
+        input: 'I want to book the pool table for tomorrow at 3 PM.',
+        output: {
+          intent: 'schedule',
+          serviceId: null,
+          serviceName: 'mesa de sinuca',
+          userName: 'Ana Costa',
+          userId: 13,
+          datetime: '2026-09-05T15:00:00.000Z',
+          reason: null,
+          document: null,
+        },
+      },
+      {
+        input: 'What are the opening hours of the condominium gym?',
+        output: {
+          intent: 'consult',
+          serviceId: 4,
+          serviceName: 'Academia',
+          userName: 'Pedro Santos',
+          userId: 14,
+          datetime: null,
+          reason: null,
+          document: null,
+        },
+      },
+      {
+        input: 'What is the weather like today?',
+        output: {
+          intent: 'unknown',
+          serviceId: null,
+          serviceName: null,
+          userName: null,
+          userId: null,
+          datetime: null,
+          reason: null,
+          document: null,
+        },
+      },
+    ]
   });
 };
 
-export const getUserPromptTemplate = (question: string) => {
+export const getUserPromptTemplate = (
+  question: string,
+  previousData?: Record<string, unknown> | null,
+) => {
   return JSON.stringify({
     question,
+    previousData: previousData ?? null,
     instructions: [
       'Carefully analyze the question to determine the user intent',
-      'Extract all relevant book details',
+      'Use the exact response keys: intent, serviceId, serviceName, userId, userName, datetime, reason, document',
       'Convert dates and times to ISO format',
       'Match service names to their IDs',
-      'Return only the fields that are present in the question'
+      'Preserve any valid data already captured in previousData',
+      'Only fill missing fields from the latest user answer',
+      'Return a valid JSON object with all schema fields present',
+      'If a value is not available, use null instead of omitting the key'
     ]
   });
 };
