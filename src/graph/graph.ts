@@ -5,18 +5,23 @@ import type { BaseMessage } from "@langchain/core/messages";
 
 import { createIdentifyIntentNode } from "./nodes/identifyIntentNode.ts";
 // import { createSchedulerNode } from "./nodes/schedulerNode.ts";
-// import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
+import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 
 const BookGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
-  author: z.number(),
-  intent: z
-    .enum(["schedule", "cancel", "consult", "unknown", "notify", "complaint"])
-    .optional(),
-  datetime: z.string().optional(),
-  bookDate: z.string().optional(),
+  userId: z.number(),
+  datetime: z.string(),
+  serviceId: z.number(),
+  serviceName: z.string(),
+  userName: z.string(),
+  reason: z.string().optional(),
+  scheduleDate: z.string().optional(),
   error: z.string().optional(),
   data: z.custom<any>().optional(),
+  informationComplete: z.boolean().optional(),
+  missingFields : z.array(z.string()).optional(),
+  invalidFields : z.array(z.string()).optional(),
+
 });
 
 export type GraphState = z.infer<typeof BookGraphSchema>;
@@ -27,27 +32,29 @@ export function buildBookGraph() {
   })
     .addNode("identifyIntent", createIdentifyIntentNode())
     // .addNode('schedule', createSchedulerNode())
-    // .addNode('message', createMessageGeneratorNode())
-    .addEdge(START, "identifyIntent")
-    // .addConditionalEdges(
-    //   'identifyIntent',
-    //   (state: GraphState): string => {
-    //     if (state.error || !state.intent || state.intent === 'unknown') {
-    //       return 'message';
-    //     }
+    .addNode('message', createMessageGeneratorNode())
 
-    //     console.log(`➡️  Routing based on intent: ${state.intent}`);
-    //     return state.intent
-    //   },
-    //   {
-    //     schedule: 'schedule',
-    //     // cancel: 'cancel',
-    //     // message: 'message',
-    //   }
-    // )
+
+    .addEdge(START, "identifyIntent")
+    .addConditionalEdges(
+      'identifyIntent',
+      (state: GraphState): string => {
+
+        if (state.error || !state.data.intent || state.data.intent === 'unknown' || state.data.isMissingFields ) {
+          return 'message';
+        }
+        
+        return state.data.intent
+      },
+      {
+        //schedule: 'schedule',
+        // cancel: 'cancel',
+        message: 'message',
+      }
+    )
     // .addEdge('schedule', 'message')
-    
-    // .addEdge("message", END);
-    .addEdge("identifyIntent", END);
+
+    .addEdge("message", END);
+
   return workflow.compile();
 }
