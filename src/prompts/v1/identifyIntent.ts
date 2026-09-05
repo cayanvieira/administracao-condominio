@@ -7,33 +7,32 @@ export const IntentSchema = z.object({
   serviceName: z.string().nullable().describe('The name of the service or area requested'),
   userName: z.string().nullable().describe('The name of the user making the request'),
   userId: z.number().nullable().describe('The ID of the user making the request'),
-  datetime: z.string().nullable().describe('Date and time in ISO format when relevant'),
+  scheduleDate: z.string().nullable().describe('Date and time in ISO format when relevant'),
   reason: z.string().nullable().describe('Reason for the request when relevant'),
   document: z.string().nullable().optional().describe('Document number when explicitly informed'),
 });
 
 export type IntentData = z.infer<typeof IntentSchema>;
 
-export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
+export const getSystemPrompt = (services: any[],user: User) => {
   return JSON.stringify({
     role: 'Intent Classifier for Condominium Books',
     task: 'Identify user intent and extract all book-related details',
     services: services.map(s => ({ id: s.id, name: s.name, document: s.document, role: s.role })),
     users: user,
-    oldData: oldData,
     current_date: new Date().toISOString(),
-    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, datetime, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations.",
+    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations.",
     rules: {
       schedule: {
         description: 'User wants to book/schedule a new service',
         keywords: ['schedule', 'book', 'I want to', 'make an book'],
-        required_fields: ['serviceName', 'datetime', 'userName'],
+        required_fields: ['serviceName', 'scheduleDate', 'userName'],
         optional_fields: ['reason',"document"]
       },
       cancel: {
         description: 'User wants to cancel an existing book',
         keywords: ['cancel', 'remove', 'delete', 'cancel my book'],
-        required_fields: ['userName', 'datetime', 'serviceName'],
+        required_fields: ['userName', 'scheduleDate', 'serviceName'],
         optional_fields: ['reason',"document"]
       },
       unknown: {
@@ -46,7 +45,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
       userName: 'Extract the user name if mentioned; otherwise keep the same as the current user name when available.',
       serviceId: 'If the user mentions a service or area name, match it to the nearest service in the services list and return its id. If not found, set null.',
       serviceName: 'Extract the service or area name as mentioned by the user. If not present, set null.',
-      datetime: 'Parse relative dates (today, tomorrow) and times. Convert to ISO format. Use current_date as reference.',
+      scheduleDate: 'Parse relative dates (today, tomorrow) and times. Convert to ISO format. Use current_date as reference.',
       document: 'Extract the user document number from the question or context. If not present, set null.',
       reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.'
     },
@@ -59,7 +58,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: 'Salão de festas',
           userName: 'João da Silva',
           userId: 10,
-          datetime: '2026-09-05T19:00:00.000Z',
+          scheduleDate: '2026-09-05T19:00:00.000Z',
           reason: 'comemorar meu aniversário',
           document: null,
         },
@@ -72,7 +71,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: 'Churrasqueira',
           userName: 'Maria Oliveira',
           userId: 11,
-          datetime: '2026-09-04T12:00:00.000Z',
+          scheduleDate: '2026-09-04T12:00:00.000Z',
           reason: null,
           document: null,
         },
@@ -85,7 +84,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: 'Piscina',
           userName: 'Carlos Souza',
           userId: 12,
-          datetime: '2026-09-05T10:00:00.000Z',
+          scheduleDate: '2026-09-05T10:00:00.000Z',
           reason: null,
           document: null,
         },
@@ -98,7 +97,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: 'mesa de sinuca',
           userName: 'Ana Costa',
           userId: 13,
-          datetime: '2026-09-05T15:00:00.000Z',
+          scheduleDate: '2026-09-05T15:00:00.000Z',
           reason: null,
           document: null,
         },
@@ -111,7 +110,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: 'Academia',
           userName: 'Pedro Santos',
           userId: 14,
-          datetime: null,
+          scheduleDate: null,
           reason: null,
           document: null,
         },
@@ -124,7 +123,7 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
           serviceName: null,
           userName: null,
           userId: null,
-          datetime: null,
+          scheduleDate: null,
           reason: null,
           document: null,
         },
@@ -135,20 +134,21 @@ export const getSystemPrompt = (services: any[],user: User, oldData: any) => {
 
 export const getUserPromptTemplate = (
   question: string,
-  previousData?: Record<string, unknown> | null,
+  previousData?: any | null,
 ) => {
   return JSON.stringify({
     question,
-    previousData: previousData ?? null,
+    previousData: previousData,
     instructions: [
       'Carefully analyze the question to determine the user intent',
-      'Use the exact response keys: intent, serviceId, serviceName, userId, userName, datetime, reason, document',
+      'Use the exact response keys: intent, serviceId, serviceName, userId, userName, scheduleDate, reason, document',
       'Convert dates and times to ISO format',
       'Match service names to their IDs',
       'Preserve any valid data already captured in previousData',
       'Only fill missing fields from the latest user answer',
       'Return a valid JSON object with all schema fields present',
-      'If a value is not available, use null instead of omitting the key'
+      'If a value is not available, use null instead of omitting the key',
+      "If has previousData, preserve any valid data already captured in it. Only fill missing fields from the latest user answer.",
     ]
   });
 };

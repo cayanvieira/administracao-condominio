@@ -5,9 +5,7 @@ import { getSystemPrompt, getUserPromptTemplate, IntentSchema } from "../../prom
 function normalizeIntentResponse(
   payload: Record<string, unknown>,
   state: GraphState,
-  services: Array<{ id: number; name: string }>,
-  missingFields:Array<string>,
-  invalidFields:Array<string>
+  services: Array<{ id: number; name: string }>
 ) {
   const rawServiceName =
     typeof payload.serviceName === "string" ? payload.serviceName.trim() : "";
@@ -34,11 +32,11 @@ function normalizeIntentResponse(
       typeof payload.userName === "string" && payload.userName.trim().length > 0
         ? payload.userName.trim()
         : state.userName ?? null,
-    datetime:
-      typeof payload.datetime === "string" && payload.datetime.trim().length > 0
-        ? payload.datetime
-        : typeof payload.datetimeToSchedule === "string" && payload.datetimeToSchedule.trim().length > 0
-          ? payload.datetimeToSchedule
+    scheduleDate:
+      typeof payload.scheduleDate === "string" && payload.scheduleDate.trim().length > 0
+        ? payload.scheduleDate
+        : typeof payload.scheduleDateToSchedule === "string" && payload.scheduleDateToSchedule.trim().length > 0
+          ? payload.scheduleDateToSchedule
           : null,
     reason:
       typeof payload.reason === "string" && payload.reason.trim().length > 0
@@ -48,9 +46,6 @@ function normalizeIntentResponse(
       typeof payload.document === "string" && payload.document.trim().length > 0
         ? payload.document
         : null,
-    missingFields,
-    invalidFields,
-    isMissingFields : missingFields.length > 0 
   };
 
   return normalized;
@@ -83,9 +78,9 @@ function validateIntentData(data: any) {
         invalidFields.push("userId");
       }
 
-      if (!data.datetime) {
-        missingFields.push("datetime");
-        invalidFields.push("datetime");
+      if (!data.scheduleDate) {
+        missingFields.push("scheduleDate");
+        invalidFields.push("scheduleDate");
       }
       break;
     }
@@ -111,13 +106,13 @@ export function createIdentifyIntentNode() {
   return async (state: GraphState): Promise<GraphState> => {
 
     const Service = new Services();
-    const oldData = state.data.oldData ?? null
+    const previousData = state.data?.previousData ?? null
     
     const input = state.messages.at(-1)!.text;
     const services = await Service.CondominiumServices.findAllServices();
     const userId = await Service.User.findUserById(state.userId)
-    const systemPrompt = getSystemPrompt(services, userId, oldData);
-    const userPrompt = getUserPromptTemplate(input, state.data ?? null);
+    const systemPrompt = getSystemPrompt(services, userId);
+    const userPrompt = getUserPromptTemplate(input, previousData);
   
     const data = await Service.OpenRouter.generate(
       systemPrompt,
@@ -133,13 +128,13 @@ export function createIdentifyIntentNode() {
         (data.content ?? {}) as Record<string, unknown>,
         state,
         services,
-        missingFields,
-        invalidFields
       );
-
       return {
         ...state,
         data: normalized,
+        missingFields,
+        invalidFields,
+        isMissingFields : missingFields.length > 0 
       };
     } catch (error) {
       console.error("❌ Error in identifyIntent node:", error);
