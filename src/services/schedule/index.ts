@@ -5,13 +5,14 @@ export type Schedule = {
   user_id: number
   service_id: number
   reservation_date: Date
-  booked_at: Date
+  scheduled_at: Date
+  active: boolean
   created_at: Date
   updated_at: Date
 }
 
 export type CreateSchedule = Pick<Schedule, 'user_id' | 'service_id' | 'reservation_date'>
-export type UpdateSchedule = Partial<CreateSchedule>
+export type UpdateSchedule = Partial<Pick<Schedule, 'user_id' | 'service_id' | 'reservation_date' | 'active'>>
 
 export class ScheduleService {
   private readonly database: Knex
@@ -47,8 +48,18 @@ export class ScheduleService {
 
     return this.database<Schedule>('schedules')
       .whereBetween('reservation_date', [start.toISOString(), end.toISOString()])
-      .where({ service_id: serviceId })
+      .where({ service_id: serviceId, active: true })
       .select('*')
+  }
+
+  async findScheduleByUserAndDate(
+    userId: number,
+    serviceId: number,
+    date: Date,
+  ): Promise<Schedule | undefined> {
+    const schedules = await this.findScheduleByDate(date, serviceId)
+
+    return schedules.find((schedule) => schedule.user_id === userId)
   }
 
   async createSchedule(schedule: CreateSchedule): Promise<Schedule> {
@@ -65,7 +76,10 @@ export class ScheduleService {
   ): Promise<Schedule | undefined> {
     const [updatedSchedule] = await this.database<Schedule>('schedules')
       .where({ id })
-      .update(schedule)
+      .update({
+        ...schedule,
+        updated_at: new Date(),
+      })
       .returning('*')
 
     return updatedSchedule

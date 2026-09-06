@@ -5,6 +5,7 @@ import type { BaseMessage } from "@langchain/core/messages";
 
 import { createIdentifyIntentNode } from "./nodes/identifyIntentNode.ts";
 import { createSchedulerNode } from "./nodes/schedulerNode.ts";
+import { createScheduleMutationNode } from "./nodes/scheduleMutationNode.ts";
 import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 
 const BookGraphSchema = z.object({
@@ -33,6 +34,7 @@ export function buildBookGraph() {
   })
     .addNode("identifyIntent", createIdentifyIntentNode())
     .addNode('schedule', createSchedulerNode())
+    .addNode('scheduleMutation', createScheduleMutationNode())
     .addNode('message', createMessageGeneratorNode())
 
 
@@ -49,11 +51,13 @@ export function buildBookGraph() {
       },
       {
         schedule: 'schedule',
-        // cancel: 'cancel',
+        cancel: 'scheduleMutation',
+        modify: 'scheduleMutation',
         message: 'message',
       }
     )
     .addEdge('schedule', 'message')
+    .addEdge('scheduleMutation', 'message')
 
     .addEdge("message", END);
 

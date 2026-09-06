@@ -16,6 +16,7 @@ const fieldLabels: Record<string, string> = {
   serviceName: 'o nome do serviço',
   userName: 'o seu nome',
   scheduleDate: 'a data e o horário',
+  newScheduleDate: 'a nova data e o novo horário da reserva',
   reason: 'o motivo',
   userId: 'o seu identificador',
   intent: 'a intenção',
@@ -35,7 +36,10 @@ export function createMessageGeneratorNode() {
       if (scheduleSuccess !== undefined && scheduleSuccess !== null) {
 
         const systemPromptMessageGenerator = getSystemPromptMessageGenerator();
-        const userPromptMessageUserGenerate = getUserPromptMessageUserGenerate(state);
+        const userPromptMessageUserGenerate = getUserPromptMessageUserGenerate(
+          state,
+          state.messages.at(-1)?.text,
+        );
 
         const response = await Service.OpenRouter.generate(
           systemPromptMessageGenerator,

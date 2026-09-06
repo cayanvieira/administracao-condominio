@@ -35,6 +35,8 @@ services:
       HOST: 0.0.0.0
     ports:
       - "3001:3001"
+    volumes:
+      - ./src/database/migrations:/app/src/database/migrations
     depends_on:
       postgres:
         condition: service_healthy

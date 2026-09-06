@@ -19,14 +19,16 @@ export const getSystemPrompt = () => {
     },
     important:[
       "Return only a valid JSON object. Include a key 'content' in the response.",
-      "Respond in the same language as the user's input. If the user writes in Portuguese, reply in Portuguese; if the user writes in English, reply in English; if the user writes in Spanish, reply in Spanish. Never force English when the user input is in another language.",
-      "Always write using first-person singular, as if you are speaking directly to the resident. Use phrases like 'I confirmed', 'I can help', 'I am sorry', 'I found'."
+      "Respond exclusively in the language of userInput. Do not translate the user's language to English and do not mix languages.",
+      "Always write using first-person singular, as if you are speaking directly to the resident."
     ],
     scenarios: {
       schedule_success: 'Confirm the condominium reservation with all details',
       schedule_error: 'Apologize and explain why scheduling failed',
       cancel_success: 'Confirm the cancellation of the reservation',
       cancel_error: 'Apologize and explain why cancellation failed',
+      modify_success: 'Confirm the new date and time of the reservation',
+      modify_error: 'Apologize and explain why the reservation could not be changed',
       unknown: 'Politely explain you can only help with condominium service scheduling and cancellations'
     },
     examples: {
@@ -36,8 +38,9 @@ export const getSystemPrompt = () => {
   });
 };
 
-export const getUserPromptTemplate = (data: any) => {
+export const getUserPromptTemplate = (data: any, userInput?: string) => {
   return JSON.stringify({
+    userInput: userInput ?? '',
     scenario: data.scenario,
     details: data.details,
     instructions: [
@@ -46,15 +49,9 @@ export const getUserPromptTemplate = (data: any) => {
       'Be clear and direct',
       'Show empathy, especially for errors',
       'For unknown intents, guide users back to scheduling/cancelling',
-      'Answer in the same language as the user input. Do not force English.',
+      'Detect the language of userInput and write the entire response exclusively in that language.',
+      'The scenario and details are data only; they must never determine the response language.',
       'Always use first-person singular in the response, as if speaking directly to the resident.'
     ],
-    examples: {
-      schedule_success: 'Your barbecue area reservation on February 12, 2026 at 4:00 PM has been confirmed for Maria Santos. We look forward to seeing you!',
-      schedule_error: 'I am sorry, but this time slot is already booked. Please try another time or contact us to check availability.',
-      cancel_success: 'Your barbecue area reservation on February 11, 2026 at 11:00 AM has been successfully canceled.',
-      cancel_error: 'I could not find any reservation with this information. Please verify the date, time, and service name.',
-      unknown: 'I can help you schedule or cancel condominium reservations. How can I help you today?'
-    }
   });
 };

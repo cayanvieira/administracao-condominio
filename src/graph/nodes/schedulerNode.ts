@@ -7,7 +7,7 @@ export function createSchedulerNode() {
     const data = state.data;
     let newSchedule
     try {
-      const canSchedule = await (await Service.Schedule.findScheduleByDate(data.scheduleDate, data.serviceId)).length === 0;
+      const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.serviceId)).length === 0;
       if (canSchedule) {
         newSchedule = await Service.Schedule.createSchedule({
           user_id: data.userId,

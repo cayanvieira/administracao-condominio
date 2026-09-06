@@ -38,6 +38,10 @@ function normalizeIntentResponse(
         : typeof payload.scheduleDateToSchedule === "string" && payload.scheduleDateToSchedule.trim().length > 0
           ? payload.scheduleDateToSchedule
           : null,
+    newScheduleDate:
+      typeof payload.newScheduleDate === "string" && payload.newScheduleDate.trim().length > 0
+        ? payload.newScheduleDate
+        : null,
     reason:
       typeof payload.reason === "string" && payload.reason.trim().length > 0
         ? payload.reason
@@ -65,6 +69,7 @@ function validateIntentData(data: any) {
   switch (intent) {
     case "schedule":
     case "cancel":
+    case "modify":
     case "consult": {
       if (!data.serviceId) {
         missingFields.push("serviceId");
@@ -81,6 +86,10 @@ function validateIntentData(data: any) {
       if (!data.scheduleDate) {
         missingFields.push("scheduleDate");
         invalidFields.push("scheduleDate");
+      }
+      if (intent === "modify" && !data.newScheduleDate) {
+        missingFields.push("newScheduleDate");
+        invalidFields.push("newScheduleDate");
       }
       break;
     }

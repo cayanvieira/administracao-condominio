@@ -2,12 +2,13 @@ import { z } from 'zod';
 import { type User } from '../../services/user/index.ts';
 
 export const IntentSchema = z.object({
-  intent: z.enum(["schedule", "cancel", "consult", "unknown", "notify", "complaint"]).nullable().describe('The user intent'),
+  intent: z.enum(["schedule", "cancel", "modify", "consult", "unknown", "notify", "complaint"]).nullable().describe('The user intent'),
   serviceId: z.number().nullable().describe('The ID of the service or area requested'),
   serviceName: z.string().nullable().describe('The name of the service or area requested'),
   userName: z.string().nullable().describe('The name of the user making the request'),
   userId: z.number().nullable().describe('The ID of the user making the request'),
-  scheduleDate: z.string().nullable().describe('Date and time in ISO format when relevant'),
+  scheduleDate: z.string().nullable().describe('Existing reservation date and time for cancel or modify; requested date and time for schedule'),
+  newScheduleDate: z.string().nullable().describe('Only the new requested date and time for modify; null for schedule or cancel'),
   reason: z.string().nullable().describe('Reason for the request when relevant'),
   document: z.string().nullable().optional().describe('Document number when explicitly informed'),
 });
@@ -21,7 +22,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
     services: services.map(s => ({ id: s.id, name: s.name, document: s.document, role: s.role })),
     users: user,
     current_date: new Date().toISOString(),
-    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations.",
+    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
     rules: {
       schedule: {
         description: 'User wants to book/schedule a new service',
@@ -35,6 +36,12 @@ export const getSystemPrompt = (services: any[],user: User) => {
         required_fields: ['userName', 'scheduleDate', 'serviceName'],
         optional_fields: ['reason',"document"]
       },
+      modify: {
+        description: 'User wants to change the date or time of an existing reservation',
+        keywords: ['change', 'modify', 'reschedule', 'move my reservation'],
+        required_fields: ['userName', 'scheduleDate', 'newScheduleDate', 'serviceName'],
+        optional_fields: ['reason',"document"]
+      },
       unknown: {
         description: 'Anything not related to scheduling or cancelling books',
         examples: ['weather questions', 'general info', 'unrelated queries']
@@ -45,7 +52,9 @@ export const getSystemPrompt = (services: any[],user: User) => {
       userName: 'Extract the user name if mentioned; otherwise keep the same as the current user name when available.',
       serviceId: 'If the user mentions a service or area name, match it to the nearest service in the services list and return its id. If not found, set null.',
       serviceName: 'Extract the service or area name as mentioned by the user. If not present, set null.',
-      scheduleDate: 'Parse relative dates (today, tomorrow) and times. Convert to ISO format. Use current_date as reference.',
+      scheduleDate: 'For schedule, parse the requested date and time. For cancel or modify, parse the date and time of the EXISTING reservation being located. Convert to ISO format.',
+      newScheduleDate: 'Only for modify, parse the NEW date and time requested by the user. For schedule and cancel, always return null.',
+      date_mapping: 'For modify: scheduleDate = old/current reservation; newScheduleDate = new/target reservation. Never reverse these values.',
       document: 'Extract the user document number from the question or context. If not present, set null.',
       reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.'
     },
@@ -72,6 +81,20 @@ export const getSystemPrompt = (services: any[],user: User) => {
           userName: 'Maria Oliveira',
           userId: 11,
           scheduleDate: '2026-09-04T12:00:00.000Z',
+          reason: null,
+          document: null,
+        },
+      },
+      {
+        input: 'Quero remarcar minha reserva da churrasqueira de 10/09/2026 às 18h para 12/09/2026 às 20h.',
+        output: {
+          intent: 'modify',
+          serviceId: 2,
+          serviceName: 'Churrasqueira',
+          userName: 'Maria Oliveira',
+          userId: 11,
+          scheduleDate: '2026-09-10T18:00:00.000Z',
+          newScheduleDate: '2026-09-12T20:00:00.000Z',
           reason: null,
           document: null,
         },
@@ -141,7 +164,9 @@ export const getUserPromptTemplate = (
     previousData: previousData,
     instructions: [
       'Carefully analyze the question to determine the user intent',
-      'Use the exact response keys: intent, serviceId, serviceName, userId, userName, scheduleDate, reason, document',
+      'Use the exact response keys: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document',
+      'For modify, scheduleDate is the old reservation and newScheduleDate is the new requested date. Never swap them.',
+      'For cancel, scheduleDate is the existing reservation and newScheduleDate must be null.',
       'Convert dates and times to ISO format',
       'Match service names to their IDs',
       'Preserve any valid data already captured in previousData',
