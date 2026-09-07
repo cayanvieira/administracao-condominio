@@ -14,7 +14,8 @@ export async function seed(knex) {
       user_id: user.id,
       service_id: service.id,
       reservation_date: new Date(Date.now() + (i + 1) * 86400000).toISOString(),
-      scheduled_at: new Date().toISOString()
+      scheduled_at: new Date().toISOString(),
+      active: true
     })
   }
 
