@@ -23,7 +23,7 @@ const fieldLabels: Record<string, string> = {
 };
 
 const followUpSchema = z.object({
-  question: z.string(),
+  content: z.string(),
 });
 
 export function createMessageGeneratorNode() {
