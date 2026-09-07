@@ -19,11 +19,18 @@
     "@langchain/openai": "^1.5.10",
     "@openrouter/sdk": "^1.2.69",
     "@types/node": "^24.10.12",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "fastify": "^5.12.1",
+    "jsonwebtoken": "^9.0.3",
     "knex": "^3.3.0",
     "langchain": "^1.5.10",
+    "nodemailer": "^10.0.1",
     "pg": "^8.23.0",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^8.0.1"
   }
 }
