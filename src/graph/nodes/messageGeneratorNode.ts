@@ -54,7 +54,7 @@ export function createMessageGeneratorNode() {
         };
       }
 
-      if (state.isMissingFields && missingFields.length > 0) {
+      if (state.isMissingFields && missingFields.length > 0 || state.data.intent === "unknown") {
         const normalizedFields = missingFields.map(
           (field: string) => fieldLabels[field] ?? field,
         );
