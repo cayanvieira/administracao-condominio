@@ -8,7 +8,13 @@ const Service = new Services()
 
 const accountInput = z.object({
   email: z.string().trim().email().max(255),
-  password: z.string().min(8).max(72),
+  password: z.string()
+    .min(8, 'A senha deve ter pelo menos 8 caracteres')
+    .max(72, 'A senha deve ter no maximo 72 caracteres')
+    .regex(/[A-Z]/, 'A senha deve conter uma letra maiuscula')
+    .regex(/[a-z]/, 'A senha deve conter uma letra minuscula')
+    .regex(/[0-9]/, 'A senha deve conter um numero')
+    .regex(/[^A-Za-z0-9]/, 'A senha deve conter um simbolo'),
   name: z.string().trim().min(2).max(150),
   document: z.string()
     .trim()
