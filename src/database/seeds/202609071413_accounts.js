@@ -8,7 +8,7 @@ export async function seed(knex) {
 
   await knex('accounts').insert(users.map((user) => ({
     user_id: user.id,
-    senha: password,
+    password,
     active: true,
     verified_at: knex.fn.now(),
   })))
