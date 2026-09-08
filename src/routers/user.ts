@@ -1,4 +1,4 @@
-import { FastifyReply, type FastifyInstance } from 'fastify'
+import { type FastifyReply, type FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import Services from '../services/index.ts'
 import { AccountServiceError } from '../services/account/index.ts'

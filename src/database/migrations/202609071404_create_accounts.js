@@ -3,7 +3,7 @@ export async function up(knex) {
     table.increments('id').primary()
     table.integer('user_id').unsigned().notNullable().unique()
       .references('id').inTable('users').onDelete('CASCADE')
-    table.string('senha', 255).notNullable()
+    table.string('password', 255).notNullable()
     table.boolean('active').notNullable().defaultTo(false)
     table.string('verification_code', 5)
     table.timestamp('verification_expires_at', { useTz: true })
