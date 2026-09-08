@@ -1,4 +1,4 @@
-import { type FastifyInstance } from 'fastify'
+import { FastifyReply, type FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import Services from '../services/index.ts'
 import { AccountServiceError } from '../services/account/index.ts'
@@ -8,8 +8,9 @@ const Service = new Services()
 
 const accountInput = z.object({
   email: z.string().trim().email().max(255),
-  senha: z.string().min(8).max(72),
+  password: z.string().min(8).max(72),
   name: z.string().trim().min(2).max(150),
+  role: z.enum(['sindico', 'morador', 'funcionario']),
   document: z.string()
     .trim()
     .refine(isValidCpfOrCnpj, 'CPF ou CNPJ invalido')
@@ -23,7 +24,7 @@ const emailAndCodeInput = z.object({
 
 const emailInput = z.object({ email: z.string().trim().email() })
 
-const sendError = (reply: any, error: unknown) => {
+const sendError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof AccountServiceError) {
     return reply.code(error.statusCode).send({ message: error.message })
   }
@@ -75,13 +76,13 @@ const Routers = (server: FastifyInstance) => {
   })
 
   server.post('/login', async (request, reply) => {
-    const parsed = z.object({ email: z.string().trim().email(), senha: z.string().min(1) }).safeParse(request.body)
+    const parsed = z.object({ email: z.string().trim().email(), password: z.string().min(1) }).safeParse(request.body)
     if (!parsed.success) {
-      return reply.code(400).send({ message: 'Email ou senha invalidos' })
+      return reply.code(400).send({ message: 'Email ou password invalidos' })
     }
 
     try {
-      return reply.send(await Service.Account.login(parsed.data.email, parsed.data.senha))
+      return reply.send(await Service.Account.login(parsed.data.email, parsed.data.password))
     } catch (error) {
       return sendError(reply, error)
     }

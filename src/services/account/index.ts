@@ -8,7 +8,7 @@ import { EmailService } from '../email/index.ts'
 type Account = {
   id: number
   user_id: number
-  senha: string
+  password: string
   active: boolean
   verification_code: string | null
   verification_expires_at: Date | null
@@ -19,7 +19,7 @@ type UserWithAccount = {
   account_id: number
   user_id: number
   email: string
-  senha: string
+  password: string
   active: boolean
   verification_code: string | null
   verification_expires_at: Date | null
@@ -31,11 +31,11 @@ type UserWithAccount = {
   updated_at: Date
 }
 
-type PublicAccount = Omit<UserWithAccount, 'senha' | 'verification_code' | 'verification_expires_at'>
+type PublicAccount = Omit<UserWithAccount, 'password' | 'verification_code' | 'verification_expires_at'>
 
 export type CreateAccount = {
   email: string
-  senha: string
+  password: string
   name: string
   document: string,
   role: string
@@ -63,44 +63,56 @@ export class AccountService {
   }
 
   async createAccount(input: CreateAccount): Promise<PublicAccount> {
+   
+    let result: {account: PublicAccount, verificationCode: string}
+
     try {
-      const account = await this.database.transaction(async (transaction) => {
-        const existingUser = await transaction('users')
-          .where('email', input.email)
-          .orWhere('document', input.document)
-          .first()
+        result = await this.database.transaction(async (transaction) => {
+            const existingUser = await transaction('users')
+            .where('email', input.email)
+            .orWhere('document', input.document)
+            .first()
 
-        if (existingUser) {
-          throw new AccountServiceError('Email ou documento ja cadastrado', 409)
-        }
+            if (existingUser) {
+            throw new AccountServiceError('Email ou documento ja cadastrado', 409)
+            }
 
-        const [user] = await transaction('users').insert({
-          name: input.name,
-          document: input.document,
-          role: input.role,
-          email: input.email,
-        }).returning('*')
-        const verificationCode = this.generateVerificationCode()
-        const [createdAccount] = await transaction<Account>('accounts')
-          .insert({
-            user_id: user.id,
-            senha: await bcrypt.hash(input.senha, 12),
-            verification_code: verificationCode,
-            verification_expires_at: this.verificationExpiration(),
-          })
-          .returning('*')
+            const [user] = await transaction('users').insert({
+            name: input.name,
+            document: input.document,
+            role: input.role,
+            email: input.email,
+            }).returning('*')
+            const verificationCode = this.generateVerificationCode()
+            const [createdAccount] = await transaction<Account>('accounts')
+            .insert({
+                user_id: user.id,
+                password: await bcrypt.hash(input.password, 12),
+                verification_code: verificationCode,
+                verification_expires_at: this.verificationExpiration(),
+            })
+            .returning('*')
 
-        await this.sendVerificationEmail(user.email, user.name, verificationCode)
-        return this.getPublicAccount(transaction, createdAccount.id)
-      })
-
-      return account
+            
+            const account = await this.getPublicAccount(transaction, createdAccount.id)
+            return {account, verificationCode}
+        })
     } catch (error) {
       if (error instanceof AccountServiceError) {
         throw error
       }
       console.error(error)
-      throw new AccountServiceError('Nao foi possivel criar a conta e enviar o email de verificacao', 503)
+      throw new AccountServiceError('Nao foi possivel criar a conta', 503)
+    }
+    
+    const { account, verificationCode } = result
+
+    try{
+        await this.sendVerificationEmail(account.email, account.name, verificationCode)
+        return account
+    }catch(error){
+        console.error(error)
+        throw new AccountServiceError('Nao foi possivel enviar o email de verificacao', 503)
     }
   }
 
@@ -146,19 +158,19 @@ export class AccountService {
     await this.sendVerificationEmail(account.email, account.name, verificationCode)
   }
 
-  async login(email: string, senha: string): Promise<{ token: string; account: PublicAccount }> {
+  async login(email: string, password: string): Promise<{ token: string; account: PublicAccount }> {
     let account: UserWithAccount
     try {
       account = await this.findUserWithAccount(email)
     } catch (error) {
       if (error instanceof AccountServiceError && error.statusCode === 404) {
-        throw new AccountServiceError('Email ou senha invalidos', 401)
+        throw new AccountServiceError('Email ou password invalidos', 401)
       }
       throw error
     }
 
-    if (!(await bcrypt.compare(senha, account.senha))) {
-      throw new AccountServiceError('Email ou senha invalidos', 401)
+    if (!(await bcrypt.compare(password, account.password))) {
+      throw new AccountServiceError('Email ou password invalidos', 401)
     }
     if (!account.active) {
       throw new AccountServiceError('Conta ainda nao foi verificada', 403)
@@ -198,11 +210,11 @@ export class AccountService {
   private async findUserWithAccount(email: string): Promise<UserWithAccount> {
     const account = await this.database<Account>('accounts')
       .join('users', 'users.id', 'accounts.user_id')
-      .where('users.email', email)
+      .where('users.email', email.toLowerCase() )
       .select(
         'accounts.id as account_id',
         'accounts.user_id',
-        'accounts.senha',
+        'accounts.password',
         'accounts.active',
         'accounts.verification_code',
         'accounts.verification_expires_at',
@@ -229,7 +241,7 @@ export class AccountService {
       .select(
         'accounts.id as account_id',
         'accounts.user_id',
-        'accounts.senha',
+        'accounts.password',
         'accounts.active',
         'accounts.verification_code',
         'accounts.verification_expires_at',
@@ -246,7 +258,7 @@ export class AccountService {
   }
 
   private toPublicAccount(account: UserWithAccount): PublicAccount {
-    const { senha: _senha, verification_code: _code, verification_expires_at: _expires, ...publicAccount } = account
+    const { password: _password, verification_code: _code, verification_expires_at: _expires, ...publicAccount } = account
     return publicAccount
   }
 }

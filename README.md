@@ -188,7 +188,7 @@ npm run db:migrate
 
 A API possui as seguintes rotas com prefixo `/user`:
 
-- `POST /user/register` — recebe `name`, `email`, `senha` e `document`, cria a conta inativa e o usuário com perfil `sindico`, e envia um código de verificação de 5 dígitos por email;
+- `POST /user/register` — recebe `name`, `email`, `senha`, `document` e `role` (`sindico`, `morador` ou `funcionario`), cria a conta inativa e envia um código de verificação de 5 dígitos por email;
 - `GET /user/verify?email=...&code=...` — rota usada pelo link enviado no email para ativar a conta;
 - `POST /user/resend-verification` — reenvia o código para uma conta ainda inativa;
 - `POST /user/login` — retorna um JWT somente depois da ativação da conta.
