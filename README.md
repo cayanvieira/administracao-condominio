@@ -162,6 +162,7 @@ Esse modelo permite evoluir o sistema para um assistente inteligente de condomí
 - PostgreSQL
 - Knex
 - Zod
+- JWT, bcryptjs e Nodemailer
 
 ## Como executar o projeto
 
@@ -182,6 +183,19 @@ npm install
 ```bash
 npm run db:migrate
 ```
+
+### Autenticação
+
+A API possui as seguintes rotas com prefixo `/user`:
+
+- `POST /user/register` — recebe `name`, `email`, `senha`, `document` e `role` (`sindico`, `morador` ou `funcionario`), cria a conta inativa e envia um código de verificação de 5 dígitos por email;
+- `GET /user/verify?email=...&code=...` — rota usada pelo link enviado no email para ativar a conta;
+- `POST /user/resend-verification` — reenvia o código para uma conta ainda inativa;
+- `POST /user/login` — retorna um JWT somente depois da ativação da conta.
+
+Configure `JWT_SECRET`, `APP_URL`, `MAIL_FROM` e as variáveis `SMTP_*` no `.env`. O código de verificação expira em 15 minutos.
+O envio é centralizado em `EmailService` para que outros serviços possam reutilizar a mesma configuração SMTP.
+Na estrutura de dados, `users` contém o email e `accounts` contém `id` (`accountId`), `user_id` (`userId`), senha, status e dados de verificação.
 
 ### Popular o banco com dados iniciais
 

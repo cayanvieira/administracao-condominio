@@ -6,6 +6,8 @@ import { ScheduleService } from './schedule/index.ts'
 import database from '../database/knex.ts'
 import { CondominiumServices } from './condominiumServices/index.ts'
 import { UserService } from './user/index.ts'
+import { AccountService } from './account/index.ts'
+import { EmailService } from './email/index.ts'
 
 class Service {
 
@@ -13,6 +15,8 @@ class Service {
   #BookGraph?: BookGraphService
   #Schedule?: ScheduleService
   #User?: UserService
+  #Account?: AccountService
+  #Email?: EmailService
   #CondominiumServices?: CondominiumServices
 
   get OpenRouter(): OpenRouterService {
@@ -29,6 +33,14 @@ class Service {
 
   get User(): UserService {
     return this.#User ??= new UserService(database)
+  }
+
+  get Account(): AccountService {
+    return this.#Account ??= new AccountService(database, this.Email)
+  }
+
+  get Email(): EmailService {
+    return this.#Email ??= new EmailService()
   }
 
   get CondominiumServices(): CondominiumServices {

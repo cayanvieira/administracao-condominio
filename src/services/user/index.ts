@@ -5,6 +5,7 @@ export type User = {
   name: string
   document: string
   role: string
+  email: string | null
   created_at: Date
   updated_at: Date
 }
