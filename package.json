@@ -8,7 +8,8 @@
     "dev": "node --env-file .env --watch src/index.ts",
     "db:migrate": "node src/database/migrate.ts latest",
     "db:rollback": "node src/database/migrate.ts rollback",
-    "db:seed": "npx knex seed:run"
+    "db:seed": "npx knex seed:run",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "type": "module",
   "keywords": [],
@@ -30,7 +31,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/nodemailer": "^8.0.1"
+    "@types/nodemailer": "^8.0.1",
+    "cross-env": "^10.1.0",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
+    "typescript": "^6.0.3"
   }
 }
