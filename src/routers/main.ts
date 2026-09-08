@@ -27,7 +27,7 @@ const Routers = (server: FastifyInstance) => {
           condominiumId?: number
           data: any
         };
-        const response = await Service.BookGraph.handleQuestion(question, userId, condominiumId, data);
+        const response = await Service.ScheduleGraph.handleQuestion(question, userId, condominiumId, data);
         return reply.send(response);
       } catch (error) {
         console.error("Error handling /chat request:", error);

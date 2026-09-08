@@ -1,6 +1,6 @@
 import { OpenRouterService } from './openRouter/index.ts'
 
-import { BookGraphService } from './bookGraph/index.ts'
+import { ScheduleGraphService } from './scheduleGraph/index.ts'
 import { ScheduleService } from './schedule/index.ts'
 
 import database from '../database/knex.ts'
@@ -13,7 +13,7 @@ import { EmailService } from './email/index.ts'
 class Service {
 
   #OpenRouter?: OpenRouterService
-  #BookGraph?: BookGraphService
+  #ScheduleGraph?: ScheduleGraphService
   #Schedule?: ScheduleService
   #User?: UserService
   #Account?: AccountService
@@ -25,8 +25,8 @@ class Service {
     return this.#OpenRouter ??= new OpenRouterService()
   }
 
-  get BookGraph(): BookGraphService {
-    return this.#BookGraph ??= new BookGraphService()
+  get ScheduleGraph(): ScheduleGraphService {
+    return this.#ScheduleGraph ??= new ScheduleGraphService()
   }
 
   get Schedule(): ScheduleService {
