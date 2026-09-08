@@ -11,6 +11,7 @@ import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 const BookGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
   userId: z.number(),
+  condominiumId: z.number().optional(),
   serviceId: z.number(),
   serviceName: z.string(),
   userName: z.string(),

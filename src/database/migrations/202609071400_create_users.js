@@ -3,7 +3,6 @@ export async function up(knex) {
     table.increments('id').primary()
     table.string('name').notNullable()
     table.string('document').notNullable().unique()
-    table.string('role').notNullable()
     table.timestamps(true, true)
   })
 }

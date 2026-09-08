@@ -4,13 +4,12 @@ export type User = {
   id: number
   name: string
   document: string
-  role: string
   email: string | null
   created_at: Date
   updated_at: Date
 }
 
-export type CreateUser = Pick<User, 'name' | 'document' | 'role'>
+export type CreateUser = Pick<User, 'name' | 'document'>
 export type UpdateUser = Partial<CreateUser>
 
 export class UserService {

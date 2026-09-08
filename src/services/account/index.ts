@@ -26,7 +26,6 @@ type UserWithAccount = {
   verified_at: Date | null
   name: string
   document: string
-  role: string
   created_at: Date
   updated_at: Date
 }
@@ -38,7 +37,6 @@ export type CreateAccount = {
   password: string
   name: string
   document: string,
-  role: string
 }
 
 export class AccountServiceError extends Error {
@@ -80,7 +78,6 @@ export class AccountService {
             const [user] = await transaction('users').insert({
             name: input.name,
             document: input.document,
-            role: input.role,
             email: input.email,
             }).returning('*')
             const verificationCode = this.generateVerificationCode()
@@ -222,7 +219,6 @@ export class AccountService {
         'users.email',
         'users.name',
         'users.document',
-        'users.role',
         'users.created_at',
         'users.updated_at',
       )
@@ -249,7 +245,6 @@ export class AccountService {
         'users.email',
         'users.name',
         'users.document',
-        'users.role',
         'users.created_at',
         'users.updated_at',
       )

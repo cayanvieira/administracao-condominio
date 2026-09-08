@@ -19,8 +19,13 @@ const Routers = (server: FastifyInstance) => {
     },
     async function (request, reply) {
       try {
-        const { question, userId, data } = request.body as { question: string, userId: number , data :any};
-        const response = await Service.BookGraph.handleQuestion(question, userId ,data);
+        const { question, userId, condominiumId, data } = request.body as {
+          question: string
+          userId: number
+          condominiumId?: number
+          data: any
+        };
+        const response = await Service.BookGraph.handleQuestion(question, userId, condominiumId, data);
         return reply.send(response);
       } catch (error) {
         console.error("Error handling /chat request:", error);

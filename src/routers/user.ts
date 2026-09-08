@@ -10,7 +10,6 @@ const accountInput = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(8).max(72),
   name: z.string().trim().min(2).max(150),
-  role: z.enum(['sindico', 'morador', 'funcionario']),
   document: z.string()
     .trim()
     .refine(isValidCpfOrCnpj, 'CPF ou CNPJ invalido')
