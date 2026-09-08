@@ -210,6 +210,11 @@ A API possui CRUD de condomínios no prefixo `/condominium`. Os campos `name`, `
 - `GET /condominium/:id/users` — lista os usuários vinculados;
 - `POST /condominium/:id/users` — vincula um usuário informando `{ "userId": 1, "role": "morador" }`;
 - `DELETE /condominium/:id/users/:userId/:role` — remove uma role específica do vínculo.
+- `GET /condominium/:id/services` — lista os serviços do condomínio;
+- `GET /condominium/:id/services/:serviceId` — consulta um serviço do condomínio;
+- `POST /condominium/:id/services` — cria um serviço no condomínio;
+- `PATCH /condominium/:id/services/:serviceId` — atualiza um serviço do condomínio;
+- `DELETE /condominium/:id/services/:serviceId` — remove um serviço do condomínio.
 
 O relacionamento é muitos-para-muitos: um usuário pode participar de vários condomínios e ter mais de uma role no mesmo condomínio. A role (`morador`, `sindico` ou `funcionario`) é definida no vínculo e pode variar entre condomínios.
 Para usar a role durante o fluxo de reservas, envie também `condominiumId` no corpo da requisição de chat.

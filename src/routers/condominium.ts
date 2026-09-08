@@ -23,6 +23,12 @@ const userInput = z.object({
   userId: z.number().int().positive(),
   role: z.enum(['sindico', 'morador', 'funcionario']),
 })
+const serviceInput = z.object({
+  name: z.string().trim().min(1).max(150),
+  minimum_hours: z.number().int().positive(),
+  can_schedule: z.boolean().default(true),
+})
+const serviceUpdate = serviceInput.partial()
 
 const sendError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof CondominiumServiceError) {
@@ -120,6 +126,83 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.removeUser(parsed.data.id, parsed.data.userId, parsed.data.role)
+      return reply.code(204).send()
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.get('/:id/services', async (request, reply) => {
+    const parsed = idParam.safeParse(request.params)
+    if (!parsed.success) return reply.code(400).send({ message: 'Id do condominio invalido' })
+
+    try {
+      await Service.Condominium.findById(parsed.data.id)
+      return reply.send(await Service.CondominiumServices.findAllServices(parsed.data.id))
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.get('/:id/services/:serviceId', async (request, reply) => {
+    const parsed = z.object({
+      id: z.coerce.number().int().positive(),
+      serviceId: z.coerce.number().int().positive(),
+    }).safeParse(request.params)
+    if (!parsed.success) return reply.code(400).send({ message: 'Ids invalidos' })
+
+    try {
+      await Service.Condominium.findById(parsed.data.id)
+      const service = await Service.CondominiumServices.findServiceById(parsed.data.serviceId, parsed.data.id)
+      if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
+      return reply.send(service)
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.post('/:id/services', async (request, reply) => {
+    const parsedId = idParam.safeParse(request.params)
+    const parsedBody = serviceInput.safeParse(request.body)
+    if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do servico invalidos' })
+
+    try {
+      await Service.Condominium.findById(parsedId.data.id)
+      return reply.code(201).send(await Service.CondominiumServices.createService(parsedId.data.id, parsedBody.data))
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.patch('/:id/services/:serviceId', async (request, reply) => {
+    const parsed = z.object({
+      id: z.coerce.number().int().positive(),
+      serviceId: z.coerce.number().int().positive(),
+    }).safeParse(request.params)
+    const parsedBody = serviceUpdate.safeParse(request.body)
+    if (!parsed.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do servico invalidos' })
+
+    try {
+      await Service.Condominium.findById(parsed.data.id)
+      const service = await Service.CondominiumServices.updateService(parsed.data.serviceId, parsed.data.id, parsedBody.data)
+      if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
+      return reply.send(service)
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.delete('/:id/services/:serviceId', async (request, reply) => {
+    const parsed = z.object({
+      id: z.coerce.number().int().positive(),
+      serviceId: z.coerce.number().int().positive(),
+    }).safeParse(request.params)
+    if (!parsed.success) return reply.code(400).send({ message: 'Ids invalidos' })
+
+    try {
+      await Service.Condominium.findById(parsed.data.id)
+      const deleted = await Service.CondominiumServices.deleteService(parsed.data.serviceId, parsed.data.id)
+      if (!deleted) return reply.code(404).send({ message: 'Servico nao encontrado' })
       return reply.code(204).send()
     } catch (error) {
       return sendError(reply, error)

@@ -10,9 +10,11 @@ const Routers = (server: FastifyInstance) => {
       schema: {
         body: {
           type: "object",
-          required: ["question"],
+          required: ["question", "userId", "condominiumId"],
           properties: {
             question: { type: "string", minLength: 5 },
+            userId: { type: "number", minimum: 1 },
+            condominiumId: { type: "number", minimum: 1 },
           },
         },
       },

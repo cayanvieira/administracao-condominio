@@ -7,6 +7,7 @@ export async function up(knex) {
       .references('id').inTable('services').onDelete('CASCADE')
     table.timestamp('reservation_date').notNullable()
     table.timestamp('scheduled_at').notNullable().defaultTo(knex.fn.now())
+    table.boolean('active').notNullable().defaultTo(true)
     table.timestamps(true, true)
   })
 }

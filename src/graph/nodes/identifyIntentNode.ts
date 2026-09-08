@@ -118,7 +118,14 @@ export function createIdentifyIntentNode() {
     const previousData = state.data?.previousData ?? null
     
     const input = state.messages.at(-1)!.text;
-    const services = await Service.CondominiumServices.findAllServices();
+    if (!state.condominiumId) {
+      return {
+        ...state,
+        error: "Condominium context is required to identify services.",
+      };
+    }
+
+    const services = await Service.CondominiumServices.findAllServices(state.condominiumId);
     const userId = await Service.User.findUserById(state.userId)
     const systemPrompt = getSystemPrompt(services, userId);
     const userPrompt = getUserPromptTemplate(input, previousData);

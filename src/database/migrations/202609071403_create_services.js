@@ -1,6 +1,7 @@
 export async function up(knex) {
   await knex.schema.createTable('services', (table) => {
     table.increments('id').primary()
+    table.integer('condominium_id').notNullable().references('id').inTable('condominiums').onDelete('CASCADE')
     table.string('name').notNullable()
     table.integer('minimum_hours').notNullable()
     table.boolean('can_schedule').notNullable().defaultTo(true)
