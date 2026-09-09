@@ -3,6 +3,7 @@ import { z } from 'zod'
 import Services from '../services/index.ts'
 import { AccountServiceError } from '../services/account/index.ts'
 import { isValidCpfOrCnpj, normalizeDocument } from '../utils/document.ts'
+import { ACL, acl } from '../middleware/acl.ts'
 
 const Service = new Services()
 
@@ -38,7 +39,7 @@ const sendError = (reply: FastifyReply, error: unknown) => {
 }
 
 const Routers = (server: FastifyInstance) => {
-  server.post('/register', async (request, reply) => {
+  server.post('/register', { preHandler: [acl(ACL.user.register)] }, async (request, reply) => {
     const parsed = accountInput.safeParse(request.body)
     if (!parsed.success) {
       return reply.code(400).send({ message: 'Dados de cadastro invalidos', errors: parsed.error.flatten() })
@@ -52,7 +53,7 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.get('/verify', async (request, reply) => {
+  server.get('/verify', { preHandler: [acl(ACL.user.verify)] }, async (request, reply) => {
     const parsed = emailAndCodeInput.safeParse(request.query)
     if (!parsed.success) {
       return reply.code(400).send({ message: 'Email ou codigo de verificacao invalidos' })
@@ -66,7 +67,7 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.post('/resend-verification', async (request, reply) => {
+  server.post('/resend-verification', { preHandler: [acl(ACL.user.resendVerification)] }, async (request, reply) => {
     const parsed = emailInput.safeParse(request.body)
     if (!parsed.success) {
       return reply.code(400).send({ message: 'Email invalido' })
@@ -80,7 +81,7 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.post('/login', async (request, reply) => {
+  server.post('/login', { preHandler: [acl(ACL.user.login)] }, async (request, reply) => {
     const parsed = z.object({ email: z.string().trim().email(), password: z.string().min(1) }).safeParse(request.body)
     if (!parsed.success) {
       return reply.code(400).send({ message: 'Email ou password invalidos' })

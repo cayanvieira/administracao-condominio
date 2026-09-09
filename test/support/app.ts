@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals'
 
+process.env.JWT_SECRET ||= 'test-secret-with-at-least-32-characters'
+
 export const accountService = {
   createAccount: jest.fn<(...args: any[]) => any>(),
   verifyAccount: jest.fn<(...args: any[]) => any>(),
@@ -65,4 +67,20 @@ export function resetMocks() {
   condominiumServices.updateService.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })
   condominiumServices.deleteService.mockResolvedValue(true)
   scheduleGraph.handleQuestion.mockResolvedValue({ scenario: 'ok' })
+}
+
+export function authHeaders(condominiums = [
+  { condominiumId: 1, userId: 1, role: 'morador' as const },
+  { condominiumId: 1, userId: 1, role: 'sindico' as const },
+  { condominiumId: 1, userId: 1, role: 'funcionario' as const },
+]) {
+  return {
+    authorization: `Bearer ${app.jwt.sign({
+      sub: 1,
+      userId: 1,
+      name: 'Ana Silva',
+      email: 'ana@example.com',
+      condominiums,
+    })}`,
+  }
 }

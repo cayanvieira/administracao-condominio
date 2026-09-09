@@ -1,5 +1,7 @@
 import { type FastifyInstance } from "fastify";
 import Services from "../services/index.ts";
+import { ACL, acl } from "../middleware/acl.ts";
+import { authenticate } from "../middleware/auth.ts";
 
 const Service = new Services();
 
@@ -7,6 +9,8 @@ const Routers = (server: FastifyInstance) => {
   server.post(
     "/chat",
     {
+      onRequest: [authenticate],
+      preHandler: [acl(ACL.main.chat)],
       schema: {
         body: {
           type: "object",

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals'
-import { app, resetMocks, scheduleGraph } from './support/app.ts'
+import { app, authHeaders, resetMocks, scheduleGraph } from './support/app.ts'
 
 beforeAll(async () => {
   await app.ready()
@@ -22,6 +22,7 @@ describe('rotas básicas e chat', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/main/chat',
+      headers: authHeaders(),
       payload: { question: 'Quero reservar a piscina', userId: 1, condominiumId: 1 },
     })
     expect(response.statusCode).toBe(200)
@@ -30,10 +31,41 @@ describe('rotas básicas e chat', () => {
     )
   })
 
+  it('rejeita chat sem autenticação', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/main/chat',
+      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumId: 1 },
+    })
+    expect(response.statusCode).toBe(401)
+    expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
+  })
+
+  it('rejeita token sem roles', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/main/chat',
+      headers: {
+        authorization: `Bearer ${app.jwt.sign({
+          sub: 1,
+          userId: 1,
+          name: 'Ana Silva',
+          email: 'ana@example.com',
+          roles: [],
+          condominiums: [],
+        })}`,
+      },
+      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumId: 1 },
+    })
+    expect(response.statusCode).toBe(403)
+    expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
+  })
+
   it('exige usuário e condomínio no chat', async () => {
     const response = await app.inject({
       method: 'POST',
       url: '/main/chat',
+      headers: authHeaders(),
       payload: { question: 'Quero reservar a piscina' },
     })
     expect(response.statusCode).toBe(400)
