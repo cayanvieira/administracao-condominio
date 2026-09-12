@@ -4,6 +4,7 @@ import { type SignOptions } from 'jsonwebtoken'
 import { randomInt } from 'node:crypto'
 import { type Knex } from 'knex'
 import { EmailService } from '../email/index.ts'
+import { type CondominiumMembership } from '../../auth/roles.ts'
 
 type Account = {
   id: number
@@ -26,7 +27,6 @@ type UserWithAccount = {
   verified_at: Date | null
   name: string
   document: string
-  role: string
   created_at: Date
   updated_at: Date
 }
@@ -38,7 +38,6 @@ export type CreateAccount = {
   password: string
   name: string
   document: string,
-  role: string
 }
 
 export class AccountServiceError extends Error {
@@ -80,7 +79,6 @@ export class AccountService {
             const [user] = await transaction('users').insert({
             name: input.name,
             document: input.document,
-            role: input.role,
             email: input.email,
             }).returning('*')
             const verificationCode = this.generateVerificationCode()
@@ -158,7 +156,7 @@ export class AccountService {
     await this.sendVerificationEmail(account.email, account.name, verificationCode)
   }
 
-  async login(email: string, password: string): Promise<{ token: string; account: PublicAccount }> {
+  async login(email: string, password: string): Promise<{ token: string; account: PublicAccount, condominiums: CondominiumMembership[] }> {
     let account: UserWithAccount
     try {
       account = await this.findUserWithAccount(email)
@@ -181,11 +179,20 @@ export class AccountService {
       throw new AccountServiceError('JWT_SECRET nao configurado', 500)
     }
 
+    const condominiums = await this.findCondominiums(account.user_id)
+
     return {
-      token: jwt.sign({ sub: account.account_id, userId: account.user_id, name: account.name, email: account.email }, secret, {
+      token: jwt.sign({
+        sub: account.account_id,
+        userId: account.user_id,
+        name: account.name,
+        email: account.email,
+        condominiums,
+      }, secret, {
         expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as SignOptions['expiresIn'],
       }),
       account: this.toPublicAccount(account),
+      condominiums
     }
   }
 
@@ -222,7 +229,6 @@ export class AccountService {
         'users.email',
         'users.name',
         'users.document',
-        'users.role',
         'users.created_at',
         'users.updated_at',
       )
@@ -232,6 +238,18 @@ export class AccountService {
       throw new AccountServiceError('Usuario nao encontrado', 404)
     }
     return account as unknown as UserWithAccount
+  }
+
+  private async findCondominiums(userId: number): Promise<CondominiumMembership[]> {
+    const memberships = await this.database('condominium_users')
+      .where({ user_id: userId })
+      .select('condominium_id', 'role', 'user_id')
+
+    return memberships.map((membership) => ({
+      condominiumId: membership.condominium_id,
+      userId: membership.user_id,
+      role: membership.role,
+    })) as CondominiumMembership[]
   }
 
   private async getPublicAccount(transaction: Knex, accountId: number): Promise<PublicAccount> {
@@ -249,7 +267,6 @@ export class AccountService {
         'users.email',
         'users.name',
         'users.document',
-        'users.role',
         'users.created_at',
         'users.updated_at',
       )

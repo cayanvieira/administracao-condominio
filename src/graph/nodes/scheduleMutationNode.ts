@@ -8,7 +8,10 @@ export function createScheduleMutationNode() {
 
     try {
       const authenticatedUser = await Service.User.findUserById(state.userId);
-      const isSyndic = authenticatedUser.role.trim().toLowerCase() === "sindico";
+      const userRole = state.condominiumId
+        ? await Service.Condominium.findUserRole(state.condominiumId, authenticatedUser.id)
+        : undefined;
+      const isSyndic = userRole?.trim().toLowerCase() === "sindico";
       const targetUserId = isSyndic && data.userId ? data.userId : state.userId;
       const schedule = await Service.Schedule.findScheduleByUserAndDate(
         targetUserId,

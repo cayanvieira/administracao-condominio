@@ -188,7 +188,7 @@ npm run db:migrate
 
 A API possui as seguintes rotas com prefixo `/user`:
 
-- `POST /user/register` — recebe `name`, `email`, `senha`, `document` e `role` (`sindico`, `morador` ou `funcionario`), cria a conta inativa e envia um código de verificação de 5 dígitos por email;
+- `POST /user/register` — recebe `name`, `email`, `senha` e `document`, cria a conta inativa e envia um código de verificação de 5 dígitos por email;
 - `GET /user/verify?email=...&code=...` — rota usada pelo link enviado no email para ativar a conta;
 - `POST /user/resend-verification` — reenvia o código para uma conta ainda inativa;
 - `POST /user/login` — retorna um JWT somente depois da ativação da conta.
@@ -196,6 +196,28 @@ A API possui as seguintes rotas com prefixo `/user`:
 Configure `JWT_SECRET`, `APP_URL`, `MAIL_FROM` e as variáveis `SMTP_*` no `.env`. O código de verificação expira em 15 minutos.
 O envio é centralizado em `EmailService` para que outros serviços possam reutilizar a mesma configuração SMTP.
 Na estrutura de dados, `users` contém o email e `accounts` contém `id` (`accountId`), `user_id` (`userId`), senha, status e dados de verificação.
+As roles são definidas somente no vínculo entre usuário e condomínio.
+
+### Condomínios e usuários
+
+A API possui CRUD de condomínios no prefixo `/condominium`. Os campos `name`, `address` e `email` são obrigatórios; `cnpj` e `phone` são opcionais. As rotas disponíveis são:
+
+- `GET /condominium` — lista os condomínios;
+- `GET /condominium/:id` — consulta um condomínio;
+- `POST /condominium` — cria um condomínio;
+- `PATCH /condominium/:id` — atualiza um condomínio;
+- `DELETE /condominium/:id` — remove um condomínio;
+- `GET /condominium/:id/users` — lista os usuários vinculados;
+- `POST /condominium/:id/users` — vincula um usuário informando `{ "userId": 1, "role": "morador" }`;
+- `DELETE /condominium/:id/users/:userId/:role` — remove uma role específica do vínculo.
+- `GET /condominium/:id/services` — lista os serviços do condomínio;
+- `GET /condominium/:id/services/:serviceId` — consulta um serviço do condomínio;
+- `POST /condominium/:id/services` — cria um serviço no condomínio;
+- `PATCH /condominium/:id/services/:serviceId` — atualiza um serviço do condomínio;
+- `DELETE /condominium/:id/services/:serviceId` — remove um serviço do condomínio.
+
+O relacionamento é muitos-para-muitos: um usuário pode participar de vários condomínios e ter mais de uma role no mesmo condomínio. A role (`morador`, `sindico` ou `funcionario`) é definida no vínculo e pode variar entre condomínios.
+Para usar a role durante o fluxo de reservas, envie também `condominiumId` no corpo da requisição de chat.
 
 ### Popular o banco com dados iniciais
 

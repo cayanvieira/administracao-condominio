@@ -8,9 +8,10 @@ import { createSchedulerNode } from "./nodes/schedulerNode.ts";
 import { createScheduleMutationNode } from "./nodes/scheduleMutationNode.ts";
 import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 
-const BookGraphSchema = z.object({
+const ScheduleGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
   userId: z.number(),
+  condominiumId: z.number().optional(),
   serviceId: z.number(),
   serviceName: z.string(),
   userName: z.string(),
@@ -26,11 +27,11 @@ const BookGraphSchema = z.object({
   scheduleSuccess: z.boolean().optional(),
 });
 
-export type GraphState = z.infer<typeof BookGraphSchema>;
+export type GraphState = z.infer<typeof ScheduleGraphSchema>;
 
-export function buildBookGraph() {
+export function buildScheduleGraph() {
   const workflow = new StateGraph({
-    stateSchema: BookGraphSchema,
+    stateSchema: ScheduleGraphSchema,
   })
     .addNode("identifyIntent", createIdentifyIntentNode())
     .addNode('schedule', createSchedulerNode())

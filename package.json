@@ -8,13 +8,16 @@
     "dev": "node --env-file .env --watch src/index.ts",
     "db:migrate": "node src/database/migrate.ts latest",
     "db:rollback": "node src/database/migrate.ts rollback",
-    "db:seed": "npx knex seed:run"
+    "db:seed": "npx knex seed:run",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@fastify/jwt": "^10.2.2",
     "@langchain/core": "^1.2.9",
     "@langchain/openai": "^1.5.10",
     "@openrouter/sdk": "^1.2.69",
@@ -22,6 +25,7 @@
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "fastify": "^5.12.1",
+    "fastify-plugin": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.3.0",
     "langchain": "^1.5.10",
@@ -30,7 +34,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/nodemailer": "^8.0.1"
+    "@types/nodemailer": "^8.0.1",
+    "cross-env": "^10.1.0",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
+    "typescript": "^6.0.3"
   }
 }
