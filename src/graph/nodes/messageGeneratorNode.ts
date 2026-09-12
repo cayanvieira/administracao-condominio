@@ -33,7 +33,10 @@ export function createMessageGeneratorNode() {
     try {
       const missingFields = Array.isArray(state.missingFields) ? state.missingFields : [];
       const { scheduleSuccess } = state
-      if (scheduleSuccess !== undefined && scheduleSuccess !== null) {
+      if (
+        (scheduleSuccess !== undefined && scheduleSuccess !== null)
+        || state.scenario === 'condominium_selection_required'
+      ) {
 
         const systemPromptMessageGenerator = getSystemPromptMessageGenerator();
         const userPromptMessageUserGenerate = getUserPromptMessageUserGenerate(

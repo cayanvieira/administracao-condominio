@@ -33,8 +33,10 @@ export class CondominiumAmenitysService {
 
     return this.database<CondominiumAmenity>('amenitys')
       .whereIn('condominium_id', condominiumIds)
-      .select('*')
+      .join('condominiums', 'amenitys.condominium_id', 'condominiums.id')
+      .select('amenitys.*', 'condominiums.name as condominium_name')
   }
+     
 
   async findAmenityById(id: number, condominiumId: number): Promise<CondominiumAmenity | undefined> {
     return this.database<CondominiumAmenity>('amenitys').where({ id, condominium_id: condominiumId }).first()

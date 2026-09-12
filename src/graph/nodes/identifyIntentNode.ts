@@ -6,6 +6,7 @@ function normalizeIntentResponse(
   payload: Record<string, unknown>,
   state: GraphState,
   services: Array<{ id: number; name: string }>
+  , condominiums: Array<{ id: number; name: string }>
 ) {
   const rawServiceName =
     typeof payload.serviceName === "string" ? payload.serviceName.trim() : "";
@@ -16,6 +17,16 @@ function normalizeIntentResponse(
           service.name.toLowerCase() === rawServiceName.toLowerCase(),
         )
       : undefined;
+  const rawCondominiumName = typeof payload.condominiumName === "string"
+    ? payload.condominiumName.trim()
+    : "";
+  const rawCondominiumId = typeof payload.condominiumIdIntent === "number"
+    ? payload.condominiumIdIntent
+    : undefined;
+  const matchedCondominium = condominiums.find((condominium) =>
+    condominium.id === rawCondominiumId
+    || condominium.name.toLowerCase() === rawCondominiumName.toLowerCase(),
+  );
 
   const normalized = {
     intent: typeof payload.intent === "string" ? payload.intent : "unknown",
@@ -27,6 +38,8 @@ function normalizeIntentResponse(
       typeof payload.serviceName === "string" && payload.serviceName.trim().length > 0
         ? payload.serviceName.trim()
         : matchedService?.name ?? null,
+      condominiumIdIntent: matchedCondominium?.id ?? null,
+      condominiumName: matchedCondominium?.name ?? null,
     userId: typeof payload.userId === "number" ? payload.userId : state.userId ?? null,
     userName:
       typeof payload.userName === "string" && payload.userName.trim().length > 0
@@ -124,10 +137,11 @@ export function createIdentifyIntentNode() {
         error: "Condominium context is required to identify services.",
       };
     }
-
-    const services = await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds(state.condominiumIds);
+    const condominiumIds = state.condominiumIds
+    const condominiums = await Promise.all(condominiumIds.map(async (id) => Service.Condominium.findById(id)))
+    const amenitys = await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds(condominiumIds);
     const userId = await Service.User.findUserById(state.userId)
-    const systemPrompt = getSystemPrompt(services, userId);
+    const systemPrompt = getSystemPrompt(amenitys, userId, condominiumIds, condominiums);
     const userPrompt = getUserPromptTemplate(input, previousData);
   
     const data = await Service.OpenRouter.generate(
@@ -143,8 +157,20 @@ export function createIdentifyIntentNode() {
       const normalized = normalizeIntentResponse(
         (data.content ?? {}) as Record<string, unknown>,
         state,
-        services,
+        amenitys,
+        condominiums,
       );
+      const requiresCondominiumSelection = condominiums.length > 1
+        && !normalized.condominiumIdIntent;
+      if (requiresCondominiumSelection) {
+        return {
+          ...state,
+          data: normalized,
+          scenario: 'condominium_selection_required',
+          details: { condominiums },
+          isMissingFields: false,
+        };
+      }
       return {
         ...state,
         data: normalized,
