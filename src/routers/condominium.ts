@@ -146,7 +146,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      return reply.send(await Service.CondominiumServices.findAllServices(parsed.data.condominiumId))
+      return reply.send(await Service.CondominiumAmenitysServices.findAllServices(parsed.data.condominiumId))
     } catch (error) {
       return sendError(reply, error)
     }
@@ -161,7 +161,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const service = await Service.CondominiumServices.findServiceById(parsed.data.serviceId, parsed.data.condominiumId)
+      const service = await Service.CondominiumAmenitysServices.findServiceById(parsed.data.serviceId, parsed.data.condominiumId)
       if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
       return reply.send(service)
     } catch (error) {
@@ -176,7 +176,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsedId.data.condominiumId)
-      return reply.code(201).send(await Service.CondominiumServices.createService(parsedId.data.condominiumId, parsedBody.data))
+      return reply.code(201).send(await Service.CondominiumAmenitysServices.createService(parsedId.data.condominiumId, parsedBody.data))
     } catch (error) {
       return sendError(reply, error)
     }
@@ -192,7 +192,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const service = await Service.CondominiumServices.updateService(parsed.data.serviceId, parsed.data.condominiumId, parsedBody.data)
+      const service = await Service.CondominiumAmenitysServices.updateService(parsed.data.serviceId, parsed.data.condominiumId, parsedBody.data)
       if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
       return reply.send(service)
     } catch (error) {
@@ -209,7 +209,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const deleted = await Service.CondominiumServices.deleteService(parsed.data.serviceId, parsed.data.condominiumId)
+      const deleted = await Service.CondominiumAmenitysServices.deleteService(parsed.data.serviceId, parsed.data.condominiumId)
       if (!deleted) return reply.code(404).send({ message: 'Servico nao encontrado' })
       return reply.code(204).send()
     } catch (error) {

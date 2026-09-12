@@ -1,5 +1,5 @@
 export async function up(knex) {
-  await knex.schema.createTable('services', (table) => {
+  await knex.schema.createTable('amenitys', (table) => {
     table.increments('id').primary()
     table.integer('condominium_id').notNullable().references('id').inTable('condominiums').onDelete('CASCADE')
     table.string('name').notNullable()
@@ -10,5 +10,5 @@ export async function up(knex) {
 }
 
 export async function down(knex) {
-  await knex.raw('DROP TABLE IF EXISTS services CASCADE')
+  await knex.raw('DROP TABLE IF EXISTS amenitys CASCADE')
 }

@@ -125,7 +125,7 @@ export function createIdentifyIntentNode() {
       };
     }
 
-    const services = await Service.CondominiumServices.findAllServices(state.condominiumId);
+    const services = await Service.CondominiumAmenitysServices.findAllServices(state.condominiumId);
     const userId = await Service.User.findUserById(state.userId)
     const systemPrompt = getSystemPrompt(services, userId);
     const userPrompt = getUserPromptTemplate(input, previousData);

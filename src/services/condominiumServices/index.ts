@@ -29,6 +29,14 @@ export class CondominiumServices {
       .select('*')
   }
 
+  async findAllServicesByCondominiumIds(condominiumIds: number[]): Promise<CondominiumService[]> {
+    if (condominiumIds.length === 0) return []
+
+    return this.database<CondominiumService>('services')
+      .whereIn('condominium_id', condominiumIds)
+      .select('*')
+  }
+
   async findServiceById(id: number, condominiumId: number): Promise<CondominiumService | undefined> {
     return this.database<CondominiumService>('services').where({ id, condominium_id: condominiumId }).first()
   }
