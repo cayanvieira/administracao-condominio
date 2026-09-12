@@ -11,7 +11,7 @@ import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 const ScheduleGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
   userId: z.number(),
-  condominiumId: z.number().optional(),
+  condominiumIds: z.array(z.number()),
   serviceId: z.number(),
   serviceName: z.string(),
   userName: z.string(),

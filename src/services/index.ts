@@ -18,7 +18,7 @@ class Service {
   #User?: UserService
   #Account?: AccountService
   #Email?: EmailService
-  #CondominiumAmenitysServices?: CondominiumAmenitysService
+  #CondominiumAmenitys?: CondominiumAmenitysService
   #Condominium?: CondominiumService
 
   get OpenRouter(): OpenRouterService {
@@ -45,8 +45,8 @@ class Service {
     return this.#Email ??= new EmailService()
   }
 
-  get CondominiumAmenitysServices(): CondominiumAmenitysService {
-    return this.#CondominiumAmenitysServices ??= new CondominiumAmenitysService(database)
+  get CondominiumAmenitys(): CondominiumAmenitysService {
+    return this.#CondominiumAmenitys ??= new CondominiumAmenitysService(database)
   }
 
   get Condominium(): CondominiumService {

@@ -23,13 +23,12 @@ export class CondominiumAmenitysService {
     this.database = database
   }
 
-  async findAllServices(condominiumId: number): Promise<CondominiumAmenity[]> {
+  async findAllAmenitys(): Promise<CondominiumAmenity[]> {
     return this.database<CondominiumAmenity>('amenitys')
-      .where({ condominium_id: condominiumId })
       .select('*')
   }
 
-  async findAllServicesByCondominiumIds(condominiumIds: number[]): Promise<CondominiumAmenity[]> {
+  async findAllAmenitysByCondominiumIds(condominiumIds: number[]): Promise<CondominiumAmenity[]> {
     if (condominiumIds.length === 0) return []
 
     return this.database<CondominiumAmenity>('amenitys')
@@ -37,32 +36,32 @@ export class CondominiumAmenitysService {
       .select('*')
   }
 
-  async findServiceById(id: number, condominiumId: number): Promise<CondominiumAmenity | undefined> {
+  async findAmenityById(id: number, condominiumId: number): Promise<CondominiumAmenity | undefined> {
     return this.database<CondominiumAmenity>('amenitys').where({ id, condominium_id: condominiumId }).first()
   }
 
-  async createService(condominiumId: number, service: CreateCondominiumAmenity): Promise<CondominiumAmenity> {
+  async createAmenity(condominiumId: number, amenity: CreateCondominiumAmenity): Promise<CondominiumAmenity> {
     const [createdService] = await this.database<CondominiumAmenity>('amenitys')
-      .insert({ ...service, condominium_id: condominiumId })
+      .insert({ ...amenity, condominium_id: condominiumId })
       .returning('*')
 
     return createdService
   }
 
-  async updateService(
+  async updateAmenity(
     id: number,
     condominiumId: number,
-    service: UpdateCondominiumAmenity,
+    amenity: UpdateCondominiumAmenity,
   ): Promise<CondominiumAmenity | undefined> {
     const [updatedService] = await this.database<CondominiumAmenity>('amenitys')
       .where({ id, condominium_id: condominiumId })
-      .update({ ...service, updated_at: this.database.fn.now() })
+      .update({ ...amenity, updated_at: this.database.fn.now() })
       .returning('*')
 
     return updatedService
   }
 
-  async deleteService(id: number, condominiumId: number): Promise<boolean> {
+  async deleteAmenity(id: number, condominiumId: number): Promise<boolean> {
     const deletedRows = await this.database<CondominiumAmenity>('amenitys')
       .where({ id, condominium_id: condominiumId })
       .del()

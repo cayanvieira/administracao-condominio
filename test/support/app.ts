@@ -21,11 +21,11 @@ export const condominiumService = {
 }
 
 export const condominiumServices = {
-  findAllServices: jest.fn<(...args: any[]) => any>(),
-  findServiceById: jest.fn<(...args: any[]) => any>(),
-  createService: jest.fn<(...args: any[]) => any>(),
-  updateService: jest.fn<(...args: any[]) => any>(),
-  deleteService: jest.fn<(...args: any[]) => any>(),
+  findAllAmenitysByCondominiumIds: jest.fn<(...args: any[]) => any>(),
+  findAmenityById: jest.fn<(...args: any[]) => any>(),
+  createAmenity: jest.fn<(...args: any[]) => any>(),
+  updateAmenity: jest.fn<(...args: any[]) => any>(),
+  deleteAmenity: jest.fn<(...args: any[]) => any>(),
 }
 
 export const scheduleGraph = {
@@ -36,7 +36,8 @@ jest.unstable_mockModule('../../src/services/index.ts', () => ({
   default: class MockServices {
     get Account() { return accountService }
     get Condominium() { return condominiumService }
-    get CondominiumServices() { return condominiumServices }
+    get CondominiumAmenitys() { return condominiumServices }
+    get CondominiumAmenitysServices() { return condominiumServices }
     get ScheduleGraph() { return scheduleGraph }
   },
 }))
@@ -61,11 +62,11 @@ export function resetMocks() {
   condominiumService.findUsers.mockResolvedValue([{ user_id: 1, role: 'morador' }])
   condominiumService.addUser.mockResolvedValue({ user_id: 1, role: 'morador' })
   condominiumService.removeUser.mockResolvedValue(undefined)
-  condominiumServices.findAllServices.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
-  condominiumServices.findServiceById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
-  condominiumServices.createService.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
-  condominiumServices.updateService.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })
-  condominiumServices.deleteService.mockResolvedValue(true)
+  condominiumServices.findAllAmenitysByCondominiumIds.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
+  condominiumServices.findAmenityById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
+  condominiumServices.createAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
+  condominiumServices.updateAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })
+  condominiumServices.deleteAmenity.mockResolvedValue(true)
   scheduleGraph.handleQuestion.mockResolvedValue({ scenario: 'ok' })
 }
 

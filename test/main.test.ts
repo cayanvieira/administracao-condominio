@@ -27,7 +27,7 @@ describe('rotas básicas e chat', () => {
     })
     expect(response.statusCode).toBe(200)
     expect(scheduleGraph.handleQuestion).toHaveBeenCalledWith(
-      'Quero reservar a piscina', 1, 1, undefined,
+      'Quero reservar a piscina', 1, [1], undefined,
     )
   })
 

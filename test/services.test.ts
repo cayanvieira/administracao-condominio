@@ -11,67 +11,67 @@ afterAll(async () => {
 
 beforeEach(resetMocks)
 
-describe('rotas de serviços do condomínio', () => {
-  it('lista serviços', async () => {
-    const response = await app.inject({ method: 'GET', url: '/condominium/1/services', headers: authHeaders() })
+describe('rotas de amenities do condomínio', () => {
+  it('lista amenities', async () => {
+    const response = await app.inject({ method: 'GET', url: '/condominium/1/amenitys', headers: authHeaders() })
     expect(response.statusCode).toBe(200)
-    expect(condominiumServices.findAllServices).toHaveBeenCalledWith(1)
+    expect(condominiumServices.findAllAmenitysByCondominiumIds).toHaveBeenCalledWith([1])
   })
 
   it('consulta serviços somente depois de validar o condomínio', async () => {
     await app.inject({
       method: 'GET',
-      url: '/condominium/7/services',
+      url: '/condominium/7/amenitys',
       headers: authHeaders([{ condominiumId: 7, userId: 1, role: 'sindico' }]),
     })
     expect(condominiumService.findById).toHaveBeenCalledWith(7)
-    expect(condominiumServices.findAllServices).toHaveBeenCalledWith(7)
+    expect(condominiumServices.findAllAmenitysByCondominiumIds).toHaveBeenCalledWith([7])
   })
 
-  it('consulta serviço', async () => {
-    const response = await app.inject({ method: 'GET', url: '/condominium/1/services/2', headers: authHeaders() })
+  it('consulta amenity', async () => {
+    const response = await app.inject({ method: 'GET', url: '/condominium/1/amenitys/2', headers: authHeaders() })
     expect(response.statusCode).toBe(200)
-    expect(condominiumServices.findServiceById).toHaveBeenCalledWith(2, 1)
+    expect(condominiumServices.findAmenityById).toHaveBeenCalledWith(2, 1)
   })
 
   it('retorna 404 para serviço inexistente no condomínio', async () => {
-    condominiumServices.findServiceById.mockResolvedValueOnce(undefined)
-    const response = await app.inject({ method: 'GET', url: '/condominium/1/services/999', headers: authHeaders() })
+    condominiumServices.findAmenityById.mockResolvedValueOnce(undefined)
+    const response = await app.inject({ method: 'GET', url: '/condominium/1/amenitys/999', headers: authHeaders() })
     expect(response.statusCode).toBe(404)
   })
 
-  it('cria serviço', async () => {
+  it('cria amenity', async () => {
     const response = await app.inject({
-      method: 'POST', url: '/condominium/1/services',
+      method: 'POST', url: '/condominium/1/amenitys',
       headers: authHeaders(),
       payload: { name: 'Piscina', minimum_hours: 2, can_schedule: true },
     })
     expect(response.statusCode).toBe(201)
-    expect(condominiumServices.createService).toHaveBeenCalledWith(1, {
+    expect(condominiumServices.createAmenity).toHaveBeenCalledWith(1, {
       name: 'Piscina', minimum_hours: 2, can_schedule: true,
     })
   })
 
   it('rejeita serviço com dados inválidos', async () => {
     const response = await app.inject({
-      method: 'POST', url: '/condominium/1/services', payload: { name: '', minimum_hours: 0 },
+      method: 'POST', url: '/condominium/1/amenitys', payload: { name: '', minimum_hours: 0 },
       headers: authHeaders(),
     })
     expect(response.statusCode).toBe(400)
-    expect(condominiumServices.createService).not.toHaveBeenCalled()
+    expect(condominiumServices.createAmenity).not.toHaveBeenCalled()
   })
 
-  it('atualiza serviço', async () => {
-    const response = await app.inject({ method: 'PATCH', url: '/condominium/1/services/2', headers: authHeaders(), payload: { name: 'Academia' } })
+  it('atualiza amenity', async () => {
+    const response = await app.inject({ method: 'PATCH', url: '/condominium/1/amenitys/2', headers: authHeaders(), payload: { name: 'Academia' } })
     expect(response.statusCode).toBe(200)
-    expect(condominiumServices.updateService).toHaveBeenCalledWith(2, 1, {
+    expect(condominiumServices.updateAmenity).toHaveBeenCalledWith(2, 1, {
       name: 'Academia', can_schedule: true,
     })
   })
 
-  it('remove serviço', async () => {
-    const response = await app.inject({ method: 'DELETE', url: '/condominium/1/services/2', headers: authHeaders() })
+  it('remove amenity', async () => {
+    const response = await app.inject({ method: 'DELETE', url: '/condominium/1/amenitys/2', headers: authHeaders() })
     expect(response.statusCode).toBe(204)
-    expect(condominiumServices.deleteService).toHaveBeenCalledWith(2, 1)
+    expect(condominiumServices.deleteAmenity).toHaveBeenCalledWith(2, 1)
   })
 })

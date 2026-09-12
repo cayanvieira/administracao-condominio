@@ -6,7 +6,8 @@ try {
   if (command === 'rollback') {
     await database.migrate.rollback()
   } else if (command === 'reset') {
-    await database.migrate.rollback(undefined, true)
+    await database.raw('DROP SCHEMA public CASCADE')
+    await database.raw('CREATE SCHEMA public')
     await database.migrate.latest()
   } else if (command === 'latest') {
     await database.migrate.latest()

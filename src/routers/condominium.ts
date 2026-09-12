@@ -31,12 +31,12 @@ const userInput = z.object({
   userId: z.number().int().positive(),
   role: z.enum(['sindico', 'morador', 'funcionario']),
 })
-const serviceInput = z.object({
+const amenityInput = z.object({
   name: z.string().trim().min(1).max(150),
   minimum_hours: z.number().int().positive(),
   can_schedule: z.boolean().default(true),
 })
-const serviceUpdate = serviceInput.partial()
+const amenityUpdate = amenityInput.partial()
 
 const sendError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof CondominiumServiceError) {
@@ -140,77 +140,77 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.get('/:condominiumId/services', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.listServices)] }, async (request, reply) => {
+  server.get('/:condominiumId/amenitys', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.listAmenitys)] }, async (request, reply) => {
     const parsed = condominiumIdParam.safeParse(request.params)
     if (!parsed.success) return reply.code(400).send({ message: 'Id do condominio invalido' })
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      return reply.send(await Service.CondominiumAmenitysServices.findAllServices(parsed.data.condominiumId))
+      return reply.send(await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds([parsed.data.condominiumId]))
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.get('/:condominiumId/services/:serviceId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.findService)] }, async (request, reply) => {
+  server.get('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.findAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
-      serviceId: z.coerce.number().int().positive(),
+      amenityId: z.coerce.number().int().positive(),
     }).safeParse(request.params)
     if (!parsed.success) return reply.code(400).send({ message: 'Ids invalidos' })
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const service = await Service.CondominiumAmenitysServices.findServiceById(parsed.data.serviceId, parsed.data.condominiumId)
-      if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
-      return reply.send(service)
+      const amenity = await Service.CondominiumAmenitys.findAmenityById(parsed.data.amenityId, parsed.data.condominiumId)
+      if (!amenity) return reply.code(404).send({ message: 'Servico nao encontrado' })
+      return reply.send(amenity)
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.post('/:condominiumId/services', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.createService)] }, async (request, reply) => {
+  server.post('/:condominiumId/amenitys', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.createAmenity)] }, async (request, reply) => {
     const parsedId = condominiumIdParam.safeParse(request.params)
-    const parsedBody = serviceInput.safeParse(request.body)
+    const parsedBody = amenityInput.safeParse(request.body)
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do servico invalidos' })
 
     try {
       await Service.Condominium.findById(parsedId.data.condominiumId)
-      return reply.code(201).send(await Service.CondominiumAmenitysServices.createService(parsedId.data.condominiumId, parsedBody.data))
+      return reply.code(201).send(await Service.CondominiumAmenitys.createAmenity(parsedId.data.condominiumId, parsedBody.data))
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.patch('/:condominiumId/services/:serviceId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.updateService)] }, async (request, reply) => {
+  server.patch('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.updateAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
-      serviceId: z.coerce.number().int().positive(),
+      amenityId: z.coerce.number().int().positive(),
     }).safeParse(request.params)
-    const parsedBody = serviceUpdate.safeParse(request.body)
+    const parsedBody = amenityUpdate.safeParse(request.body)
     if (!parsed.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do servico invalidos' })
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const service = await Service.CondominiumAmenitysServices.updateService(parsed.data.serviceId, parsed.data.condominiumId, parsedBody.data)
-      if (!service) return reply.code(404).send({ message: 'Servico nao encontrado' })
-      return reply.send(service)
+      const amenity = await Service.CondominiumAmenitys.updateAmenity(parsed.data.amenityId, parsed.data.condominiumId, parsedBody.data)
+      if (!amenity) return reply.code(404).send({ message: 'Amenity nao encontrado' })
+      return reply.send(amenity)
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.delete('/:condominiumId/services/:serviceId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.removeService)] }, async (request, reply) => {
+  server.delete('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.removeAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
-      serviceId: z.coerce.number().int().positive(),
+      amenityId: z.coerce.number().int().positive(),
     }).safeParse(request.params)
     if (!parsed.success) return reply.code(400).send({ message: 'Ids invalidos' })
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const deleted = await Service.CondominiumAmenitysServices.deleteService(parsed.data.serviceId, parsed.data.condominiumId)
-      if (!deleted) return reply.code(404).send({ message: 'Servico nao encontrado' })
+      const deleted = await Service.CondominiumAmenitys.deleteAmenity(parsed.data.amenityId, parsed.data.condominiumId)
+      if (!deleted) return reply.code(404).send({ message: 'Amenity nao encontrado' })
       return reply.code(204).send()
     } catch (error) {
       return sendError(reply, error)
