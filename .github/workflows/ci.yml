@@ -40,4 +40,4 @@ jobs:
         run: npm test
 
       - name: Validate production Docker image
-        run: docker build -f Dockerfile.prod -t sindy-ci .
+        run: docker build -f dockerfile.prod -t sindy-ci .
