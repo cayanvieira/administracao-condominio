@@ -39,5 +39,5 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Validate Docker image
-        run: docker build -t sindy-ci .
+      - name: Validate production Docker image
+        run: docker build -f dockerfile.prod -t sindy-ci .

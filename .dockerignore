@@ -3,3 +3,9 @@ npm-debug.log
 .env
 .git
 .gitignore
+dist
+.github
+.env
+.env.local
+.env.development
+.env.production
