@@ -4,7 +4,7 @@ export async function up(knex) {
     table.integer('user_id').unsigned().notNullable()
       .references('id').inTable('users').onDelete('CASCADE')
     table.integer('service_id').unsigned().notNullable()
-      .references('id').inTable('services').onDelete('CASCADE')
+      .references('id').inTable('amenitys').onDelete('CASCADE')
     table.timestamp('reservation_date').notNullable()
     table.timestamp('scheduled_at').notNullable().defaultTo(knex.fn.now())
     table.boolean('active').notNullable().defaultTo(true)

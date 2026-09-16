@@ -5,6 +5,8 @@ export const IntentSchema = z.object({
   intent: z.enum(["schedule", "cancel", "modify", "consult", "unknown", "notify", "complaint"]).nullable().describe('The user intent'),
   serviceId: z.number().nullable().describe('The ID of the service or area requested'),
   serviceName: z.string().nullable().describe('The name of the service or area requested'),
+  condominiumIdIntent: z.number().nullable().describe('The condominium selected for the current intent'),
+  condominiumName: z.string().nullable().describe('The condominium selected for the current intent'),
   userName: z.string().nullable().describe('The name of the user making the request'),
   userId: z.number().nullable().describe('The ID of the user making the request'),
   scheduleDate: z.string().nullable().describe('Existing reservation date and time for cancel or modify; requested date and time for schedule'),
@@ -15,31 +17,41 @@ export const IntentSchema = z.object({
 
 export type IntentData = z.infer<typeof IntentSchema>;
 
-export const getSystemPrompt = (services: any[],user: User) => {
+export const getSystemPrompt = (
+  services: any[],
+  user: User,
+  condominiumIds: number[],
+  condominiums: Array<{ id: number; name: string }>,
+) => {
   return JSON.stringify({
     role: 'Intent Classifier for Condominium Books',
     task: 'Identify user intent and extract all book-related details',
     services: services.map(s => ({ id: s.id, name: s.name, document: s.document, role: s.role })),
     users: user,
+    condominiumIds: condominiumIds,
+    condominiums,
     current_date: new Date().toISOString(),
-    important:"Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
+    important:[
+      "if condominiumIds is more than one, do not assume a condominium. Ask the user to choose one before checking dates or scheduling. Use condominiumIdIntent only when the user selected one from the provided condominiums list.",
+      "Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
+    ],
     rules: {
       schedule: {
         description: 'User wants to book/schedule a new service',
         keywords: ['schedule', 'book', 'I want to', 'make an book'],
-        required_fields: ['serviceName', 'scheduleDate', 'userName'],
+        required_fields: ['serviceName', 'scheduleDate', 'userName', 'condominiumIdIntent'],
         optional_fields: ['reason',"document"]
       },
       cancel: {
         description: 'User wants to cancel an existing book',
         keywords: ['cancel', 'remove', 'delete', 'cancel my book'],
-        required_fields: ['userName', 'scheduleDate', 'serviceName'],
+        required_fields: ['userName', 'scheduleDate', 'serviceName', 'condominiumIdIntent'],
         optional_fields: ['reason',"document"]
       },
       modify: {
         description: 'User wants to change the date or time of an existing reservation',
         keywords: ['change', 'modify', 'reschedule', 'move my reservation'],
-        required_fields: ['userName', 'scheduleDate', 'newScheduleDate', 'serviceName'],
+        required_fields: ['userName', 'scheduleDate', 'newScheduleDate', 'serviceName', 'condominiumIdIntent'],
         optional_fields: ['reason',"document"]
       },
       unknown: {
@@ -56,7 +68,9 @@ export const getSystemPrompt = (services: any[],user: User) => {
       newScheduleDate: 'Only for modify, parse the NEW date and time requested by the user. For schedule and cancel, always return null.',
       date_mapping: 'For modify: scheduleDate = old/current reservation; newScheduleDate = new/target reservation. Never reverse these values.',
       document: 'Extract the user document number from the question or context. If not present, set null.',
-      reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.'
+      reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.',
+      condominiumIdIntent: 'If condominiumIds is more than one, identify the condominium selected by the user and return its ID from the provided list. If the user did not select one, return null. Never invent an ID.',
+      condominiumName: 'Return the name matching condominiumIdIntent. If no condominium was selected, return null.'
     },
     examples: [
       {
@@ -64,6 +78,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
         output: {
           intent: 'schedule',
           serviceId: 1,
+          condominiumId: 1,
           serviceName: 'Salão de festas',
           userName: 'João da Silva',
           userId: 10,
@@ -77,6 +92,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
         output: {
           intent: 'cancel',
           serviceId: 2,
+          condominiumId: 1,
           serviceName: 'Churrasqueira',
           userName: 'Maria Oliveira',
           userId: 11,
@@ -89,6 +105,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
         input: 'Quero remarcar minha reserva da churrasqueira de 10/09/2026 às 18h para 12/09/2026 às 20h.',
         output: {
           intent: 'modify',
+          condominiumId: 1,
           serviceId: 2,
           serviceName: 'Churrasqueira',
           userName: 'Maria Oliveira',
@@ -103,6 +120,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
         input: 'Can I book the swimming pool for Saturday at 10 AM?',
         output: {
           intent: 'schedule',
+          condominiumId: 1,
           serviceId: 3,
           serviceName: 'Piscina',
           userName: 'Carlos Souza',
@@ -119,6 +137,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
           serviceId: null,
           serviceName: 'mesa de sinuca',
           userName: 'Ana Costa',
+          condominiumId: 1,
           userId: 13,
           scheduleDate: '2026-09-05T15:00:00.000Z',
           reason: null,
@@ -129,6 +148,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
         input: 'What are the opening hours of the condominium gym?',
         output: {
           intent: 'consult',
+          condominiumId: 1,
           serviceId: 4,
           serviceName: 'Academia',
           userName: 'Pedro Santos',
@@ -146,6 +166,7 @@ export const getSystemPrompt = (services: any[],user: User) => {
           serviceName: null,
           userName: null,
           userId: null,
+          condominiumId: 1,
           scheduleDate: null,
           reason: null,
           document: null,

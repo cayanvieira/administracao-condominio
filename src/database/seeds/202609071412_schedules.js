@@ -2,7 +2,7 @@ export async function seed(knex) {
   await knex('schedules').del()
 
   const users = await knex('users').select('id')
-  const services = await knex('services').select('id')
+  const services = await knex('amenitys').select('id')
 
   const schedules = []
 

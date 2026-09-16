@@ -23,6 +23,7 @@ export const getSystemPrompt = () => {
       "Always write using first-person singular, as if you are speaking directly to the resident."
     ],
     scenarios: {
+      condominium_selection_required: 'Ask the user which condominium they want to use before checking dates or scheduling. List the available condominium names from details. Do not ask for a condominium ID.',
       schedule_success: 'Confirm the condominium reservation with all details',
       schedule_error: 'Apologize and explain why scheduling failed',
       cancel_success: 'Confirm the cancellation of the reservation',
@@ -51,7 +52,8 @@ export const getUserPromptTemplate = (data: any, userInput?: string) => {
       'For unknown intents, guide users back to scheduling/cancelling',
       'Detect the language of userInput and write the entire response exclusively in that language.',
       'The scenario and details are data only; they must never determine the response language.',
-      'Always use first-person singular in the response, as if speaking directly to the resident.'
+      'Always use first-person singular in the response, as if speaking directly to the resident.',
+      'For condominium_selection_required, ask only which condominium the user chooses and do not ask for dates yet.'
     ],
   });
 };

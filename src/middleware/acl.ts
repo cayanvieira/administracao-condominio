@@ -1,5 +1,5 @@
 import type { preHandlerHookHandler } from 'fastify'
-import { ALL_ROLES, CondominiumMembership, type Role } from '../auth/roles.ts'
+import { ALL_ROLES, type CondominiumMembership, type Role } from '../auth/roles.ts'
 
 export type AclRoute = {
   url: string
@@ -31,11 +31,11 @@ export const ACL = {
     listUsers: { url: '/condominium/:condominiumId/users', type: 'private', roles: ALL_ROLES },
     addUser: { url: '/condominium/:condominiumId/users', type: 'private', roles: ["sindico"] },
     removeUser: { url: '/condominium/:condominiumId/users/:userId/:role', type: 'private', roles: ["sindico"] },
-    listServices: { url: '/condominium/:condominiumId/services', type: 'private', roles: ALL_ROLES },
-    findService: { url: '/condominium/:condominiumId/services/:serviceId', type: 'private', roles: ALL_ROLES },
-    createService: { url: '/condominium/:condominiumId/services', type: 'private', roles: ALL_ROLES },
-    updateService: { url: '/condominium/:condominiumId/services/:serviceId', type: 'private', roles: ALL_ROLES },
-    removeService: { url: '/condominium/:condominiumId/services/:serviceId', type: 'private', roles: ALL_ROLES },
+    listAmenitys: { url: '/condominium/:condominiumId/amenitys', type: 'private', roles: ALL_ROLES },
+    findAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
+    createAmenity: { url: '/condominium/:condominiumId/amenitys', type: 'private', roles: ALL_ROLES },
+    updateAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
+    removeAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
   },
 } as const
 
@@ -45,7 +45,7 @@ export const acl = (route: AclRoute): preHandlerHookHandler => async (request, r
   }
 
   const params = request.params as { condominiumId?: string } | undefined
-  const body = request.body as { condominiumId?: number } | undefined
+  const body = request.body as { condominiumId?: number; condominiumIds?: number[] } | undefined
   const rawCondominiumId = params?.condominiumId ?? body?.condominiumId
   const condominiumId = rawCondominiumId === undefined ? undefined : Number(rawCondominiumId)
 

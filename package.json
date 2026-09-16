@@ -8,6 +8,7 @@
     "dev": "node --env-file .env --watch src/index.ts",
     "db:migrate": "node src/database/migrate.ts latest",
     "db:rollback": "node src/database/migrate.ts rollback",
+    "db:reset": "node src/database/migrate.ts reset && npm run db:seed",
     "db:seed": "npx knex seed:run",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },

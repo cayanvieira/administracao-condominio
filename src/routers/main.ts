@@ -14,24 +14,24 @@ const Routers = (server: FastifyInstance) => {
       schema: {
         body: {
           type: "object",
-          required: ["question", "userId", "condominiumId"],
+          required: ["question", "userId", "condominiumIds"],
           properties: {
             question: { type: "string", minLength: 5 },
             userId: { type: "number", minimum: 1 },
-            condominiumId: { type: "number", minimum: 1 },
+            condominiumIds: { type: "array", items: { type: "number", minimum: 1 }, minItems: 1 },
           },
         },
       },
     },
     async function (request, reply) {
       try {
-        const { question, userId, condominiumId, data } = request.body as {
+        const { question, userId, condominiumIds, data } = request.body as {
           question: string
           userId: number
-          condominiumId?: number
+          condominiumIds?: number[]
           data: any
         };
-        const response = await Service.ScheduleGraph.handleQuestion(question, userId, condominiumId, data);
+        const response = await Service.ScheduleGraph.handleQuestion(question, userId, condominiumIds, data);
         return reply.send(response);
       } catch (error) {
         console.error("Error handling /chat request:", error);

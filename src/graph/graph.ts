@@ -11,7 +11,9 @@ import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 const ScheduleGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
   userId: z.number(),
-  condominiumId: z.number().optional(),
+  condominiumIds: z.array(z.number()),
+  condominiumIdIntent: z.number().optional(),
+  condominiumName: z.string().optional(),
   serviceId: z.number(),
   serviceName: z.string(),
   userName: z.string(),
@@ -44,7 +46,13 @@ export function buildScheduleGraph() {
       'identifyIntent',
       (state: GraphState): string => {
 
-        if (state.error || !state.data.intent || state.data.intent === 'unknown' || state.isMissingFields ) {
+        if (
+          state.error
+          || state.scenario === 'condominium_selection_required'
+          || !state.data?.intent
+          || state.data.intent === 'unknown'
+          || state.isMissingFields
+        ) {
           return 'message';
         }
         
