@@ -5,14 +5,16 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",    
     "start": "node --env-file .env src/index.ts",
+    "start:prod": "node dist/index.js",
     "dev": "node --env-file .env --watch src/index.ts",
     "db:migrate": "node src/database/migrate.ts latest",
+    "db:migrate:prod": "node dist/database/migrate.js latest",
     "db:rollback": "node src/database/migrate.ts rollback",
     "db:reset": "node src/database/migrate.ts reset && npm run db:seed",
     "db:seed": "npx knex seed:run",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "lint": "eslint src test"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "type": "module",
   "keywords": [],
