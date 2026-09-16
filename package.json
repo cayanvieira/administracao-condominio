@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "start": "node --env-file .env src/index.ts",
     "dev": "node --env-file .env --watch src/index.ts",
     "db:migrate": "node src/database/migrate.ts latest",
