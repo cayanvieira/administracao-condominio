@@ -88,7 +88,11 @@ export class OpenRouterService {
         );
       }
       const rawContent = response.choices.at(0)?.message.content;
-      const parsedContent = parseJsonResponse(rawContent);
+      const parsedContent = parseJsonResponse(
+        typeof rawContent === 'string'
+          ? rawContent
+          : undefined
+      );
 
       if(stepName === "identifyIntentNode") {
         return {
