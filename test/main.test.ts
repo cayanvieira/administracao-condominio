@@ -23,7 +23,7 @@ describe('rotas básicas e chat', () => {
       method: 'POST',
       url: '/main/chat',
       headers: authHeaders(),
-      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumId: 1 },
+      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumIds: [1] },
     })
     expect(response.statusCode).toBe(200)
     expect(scheduleGraph.handleQuestion).toHaveBeenCalledWith(
@@ -55,7 +55,7 @@ describe('rotas básicas e chat', () => {
           condominiums: [],
         })}`,
       },
-      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumId: 1 },
+      payload: { question: 'Quero reservar a piscina', userId: 1, condominiumIds: [1] },
     })
     expect(response.statusCode).toBe(403)
     expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
