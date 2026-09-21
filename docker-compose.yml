@@ -1,10 +1,10 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: administracao-condominio-postgres
+    container_name: sindy-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-administracao_condominio}
+      POSTGRES_DB: ${DB_NAME:-sindy}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-administracao_condominio}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-sindy}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,14 +21,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: administracao-condominio-app
+    container_name: sindy-app
     restart: unless-stopped
     env_file:
       - .env
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-administracao_condominio}
+      DB_NAME: ${DB_NAME:-sindy}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       PORT: 3001
