@@ -1,0 +1,30 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Prepare Docker image publication
+
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Confirm CI success
+        run: echo "CI completed successfully. Sindy is ready for image publication."

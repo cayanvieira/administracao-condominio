@@ -1,7 +1,7 @@
 {
   "node_version": "20",
   "graphs": {
-    "administracao_condominio": "./src/graph/factory.ts:graph"
+    "sindy": "./src/graph/factory.ts:graph"
   },
   "env": ".env"
 }
