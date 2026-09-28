@@ -69,7 +69,7 @@ export const getSystemPrompt = (
       date_mapping: 'For modify: scheduleDate = old/current reservation; newScheduleDate = new/target reservation. Never reverse these values.',
       document: 'Extract the user document number from the question or context. If not present, set null.',
       reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.',
-      condominiumIdIntent: 'If condominiumIds is more than one, identify the condominium selected by the user and return its ID from the provided list. If the user did not select one, return null. Never invent an ID.',
+      condominiumIdIntent: 'If condominiumIds is more than one, identify the condominium in condominiums ,identify the condominium selected by the user and return its ID from the provided list. If the user did not select one, return null. Never invent an ID.',
       condominiumName: 'Return the name matching condominiumIdIntent. If no condominium was selected, return null.'
     },
     examples: [
