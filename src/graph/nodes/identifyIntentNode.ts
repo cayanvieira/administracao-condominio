@@ -69,7 +69,7 @@ function normalizeIntentResponse(
 }
 
 function validateIntentData(data: any) {
-  data = data.content
+
   const intent = data.intent
   const missingFields: string[] = [];
   const invalidFields: string[] = [];
@@ -100,6 +100,13 @@ function validateIntentData(data: any) {
         missingFields.push("scheduleDate");
         invalidFields.push("scheduleDate");
       }
+      if(
+        !data.condominiumIdIntent || !data.condominiumName
+      ){
+        missingFields.push("condominiumIdIntent");
+        invalidFields.push("condominiumIdIntent");
+      }
+
       if (intent === "modify" && !data.newScheduleDate) {
         missingFields.push("newScheduleDate");
         invalidFields.push("newScheduleDate");
@@ -151,8 +158,6 @@ export function createIdentifyIntentNode() {
       "identifyIntentNode"
     );
 
-    const { missingFields, invalidFields } = validateIntentData(data);
-
     try {
       const normalized = normalizeIntentResponse(
         (data.content ?? {}) as Record<string, unknown>,
@@ -160,17 +165,10 @@ export function createIdentifyIntentNode() {
         amenitys,
         condominiums,
       );
-      const requiresCondominiumSelection = condominiums.length > 1
-        && !normalized.condominiumIdIntent;
-      if (requiresCondominiumSelection) {
-        return {
-          ...state,
-          data: normalized,
-          scenario: 'condominium_selection_required',
-          details: { condominiums },
-          isMissingFields: false,
-        };
-      }
+     
+
+      const { missingFields, invalidFields } = validateIntentData(normalized);
+
       return {
         ...state,
         data: normalized,

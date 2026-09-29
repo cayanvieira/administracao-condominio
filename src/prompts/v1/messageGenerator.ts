@@ -23,8 +23,8 @@ export const getSystemPrompt = () => {
       "Always write using first-person singular, as if you are speaking directly to the resident."
     ],
     scenarios: {
-      condominium_selection_required: 'Ask the user which condominium they want to use before checking dates or scheduling. List the available condominium names from details. Do not ask for a condominium ID.',
       schedule_success: 'Confirm the condominium reservation with all details',
+      schedule_confirm: 'Ask to user if it want confirm the scheduleDate , use little bit words',
       schedule_error: 'Apologize and explain why scheduling failed',
       cancel_success: 'Confirm the cancellation of the reservation',
       cancel_error: 'Apologize and explain why cancellation failed',
@@ -33,6 +33,7 @@ export const getSystemPrompt = () => {
       unknown: 'Politely explain you can only help with condominium service scheduling and cancellations'
     },
     examples: {
+      schedule_confirm:{content:'Would you like to confirm the resetavtion in december 13,2028?'},
       schedule_success:{content:'Your barbecue area reservation on February 12, 2026 at 4:00 PM has been confirmed for Maria Santos. We look forward to seeing you!'},
       schedule_error:{content:'I am sorry, but this time slot is already booked. Please try another time or contact us to check availability.'},
     }
