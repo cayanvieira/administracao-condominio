@@ -9,23 +9,39 @@ export function createSchedulerNode() {
     try {
       const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.serviceId)).length === 0;
       if (canSchedule) {
-        newSchedule = await Service.Schedule.createSchedule({
-          user_id: data.userId,
-          service_id: data.serviceId,
-          reservation_date: new Date(data.scheduleDate)
-        });
+        const userConfirmedSchedule = state.data?.userConfirmed;
+       
+        if (userConfirmedSchedule) {
+          newSchedule = await Service.Schedule.createSchedule({
+            user_id: data.userId,
+            service_id: data.serviceId,
+            reservation_date: new Date(data.scheduleDate)
+          });
+
+          return {
+            ...state,
+            scheduleSuccess: true,
+            scenario: 'schedule_success',
+            details: {
+              userName: data.userName,
+              scheduleDate: data.scheduleDate,
+              serviceName: data.serviceName,
+              newSchedule
+            }
+          };
+        }
 
         return {
           ...state,
-          scheduleSuccess: true,
-          scenario: 'schedule_success',
+          scenario: 'schedule_confirm',
           details: {
             userName: data.userName,
             scheduleDate: data.scheduleDate,
             serviceName: data.serviceName,
-            newSchedule
           }
         };
+
+
       }
       else {
         return {

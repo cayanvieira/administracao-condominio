@@ -21,12 +21,13 @@ const ScheduleGraphSchema = z.object({
   scheduleDate: z.string().optional(),
   error: z.string().optional(),
   data: z.custom<any>().optional(),
-  missingFields : z.array(z.string()).optional(),
+  missingFields : z.array(z.string()),
   invalidFields : z.array(z.string()).optional(),
   isMissingFields : z.boolean().optional(),
   scenario: z.string().optional(),
   details: z.custom<any>().optional(),
   scheduleSuccess: z.boolean().optional(),
+  userConfirmed:z.boolean().optional()
 });
 
 export type GraphState = z.infer<typeof ScheduleGraphSchema>;
@@ -48,7 +49,6 @@ export function buildScheduleGraph() {
 
         if (
           state.error
-          || state.scenario === 'condominium_selection_required'
           || !state.data?.intent
           || state.data.intent === 'unknown'
           || state.isMissingFields

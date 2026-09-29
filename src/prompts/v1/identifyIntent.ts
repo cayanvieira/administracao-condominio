@@ -33,7 +33,7 @@ export const getSystemPrompt = (
     current_date: new Date().toISOString(),
     important:[
       "if condominiumIds is more than one, do not assume a condominium. Ask the user to choose one before checking dates or scheduling. Use condominiumIdIntent only when the user selected one from the provided condominiums list.",
-      "Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
+      "Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, serviceId, serviceName, userId, userName, scheduleDate, newScheduleDate, reason, document, condominiumIdIntent, condominiumName. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
     ],
     rules: {
       schedule: {
