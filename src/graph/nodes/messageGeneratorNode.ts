@@ -1,4 +1,4 @@
-import type { GraphState } from '../graph.ts';
+import type { GraphState }  from "../state.ts";
 import { AIMessage } from 'langchain';
 import { z } from 'zod';
 
