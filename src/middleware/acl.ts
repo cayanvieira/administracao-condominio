@@ -36,6 +36,9 @@ export const ACL = {
     createAmenity: { url: '/condominium/:condominiumId/amenitys', type: 'private', roles: ALL_ROLES },
     updateAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
     removeAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
+    listSchedules: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ALL_ROLES },
+    createSchedule: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ['morador'] },
+    updateSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
   },
 } as const
 
