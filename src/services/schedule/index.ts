@@ -33,6 +33,30 @@ export class ScheduleService {
     return this.database<Schedule>('schedules').where({ user_id: userId }).select('*')
   }
 
+  async findSchedulesByCondominium(
+    condominiumId: number,
+    filters: { userId?: number, active?: boolean, from?: Date } = {},
+  ): Promise<(Schedule & { amenity_name: string, user_name: string })[]> {
+    const query = this.database<Schedule>('schedules')
+      .join('amenitys', 'amenitys.id', 'schedules.service_id')
+      .join('users', 'users.id', 'schedules.user_id')
+      .where('amenitys.condominium_id', condominiumId)
+      .select('schedules.*', 'amenitys.name as amenity_name', 'users.name as user_name')
+      .orderBy('schedules.reservation_date')
+
+    if (filters.userId !== undefined) {
+      query.where('schedules.user_id', filters.userId)
+    }
+    if (filters.active !== undefined) {
+      query.where('schedules.active', filters.active)
+    }
+    if (filters.from !== undefined) {
+      query.where('schedules.reservation_date', '>=', filters.from)
+    }
+
+    return query
+  }
+
   async findSchedulesByService(serviceId: number): Promise<Schedule[]> {
     return this.database<Schedule>('schedules').where({ service_id: serviceId }).select('*')
   }
