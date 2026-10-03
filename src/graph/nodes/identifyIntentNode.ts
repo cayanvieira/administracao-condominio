@@ -1,4 +1,4 @@
-import type { GraphState } from "../graph.ts";
+import type { GraphState }  from "../state.ts";
 import Services from "../../services/index.ts";
 import { getSystemPrompt, getUserPromptTemplate, IntentSchema } from "../../prompts/v1/identifyIntent.ts";
 
@@ -145,7 +145,7 @@ export function createIdentifyIntentNode() {
       };
     }
     const condominiumIds = state.condominiumIds
-    const condominiums = await Promise.all(condominiumIds.map(async (id) => Service.Condominium.findById(id)))
+    const condominiums = await Promise.all(condominiumIds.map(async (id:number) => Service.Condominium.findById(id)))
     const amenitys = await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds(condominiumIds);
     const userId = await Service.User.findUserById(state.userId)
     const systemPrompt = getSystemPrompt(amenitys, userId, condominiumIds, condominiums);

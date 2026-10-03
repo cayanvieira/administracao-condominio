@@ -1,4 +1,4 @@
-import type { GraphState } from "../graph.ts";
+import type { GraphState }  from "../state.ts";
 import Services from "../../services/index.ts";
 
 export function createSchedulerNode() {
