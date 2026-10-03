@@ -57,9 +57,10 @@ export function createMessageGeneratorNode() {
           followUpSchema,
           "messageGeneratorNode",
         );
-
+        
         return {
           ...state,
+          userConfirmationSchedule: scenario === 'schedule_confirm' ? true : false,
           messages: [...state.messages, new AIMessage(response.content)],
         };
       }

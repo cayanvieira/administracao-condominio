@@ -9,7 +9,7 @@ export function createSchedulerNode() {
     try {
       const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.serviceId)).length === 0;
       if (canSchedule) {
-        const userConfirmedSchedule = state.data?.userConfirmed;
+        const userConfirmedSchedule = state.data?.userConfirmedSchedule;
        
         if (userConfirmedSchedule) {
           newSchedule = await Service.Schedule.createSchedule({
