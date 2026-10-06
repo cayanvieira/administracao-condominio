@@ -37,9 +37,8 @@ export const ACL = {
     updateAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
     removeAmenity: { url: '/condominium/:condominiumId/amenitys/:amenityId', type: 'private', roles: ALL_ROLES },
     listSchedules: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ALL_ROLES },
-    createSchedule: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ['morador', 'sindico'] },
+    createSchedule: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ['morador'] },
     updateSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
-    deleteSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
   },
 } as const
 
