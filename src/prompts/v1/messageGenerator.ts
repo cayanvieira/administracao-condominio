@@ -25,6 +25,7 @@ export const getSystemPrompt = () => {
     scenarios: {
       schedule_success: 'Confirm the condominium reservation with all details',
       schedule_confirm: 'Ask to user if it want confirm the scheduleDate , use little bit words',
+      scheduler_disagree: 'Acknowledge the user\'s disagreement and ask for a new date and time for the reservation',
       schedule_error: 'Apologize and explain why scheduling failed',
       cancel_success: 'Confirm the cancellation of the reservation',
       cancel_error: 'Apologize and explain why cancellation failed',

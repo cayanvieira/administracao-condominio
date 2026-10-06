@@ -1,4 +1,4 @@
-import type { GraphState }  from "../state.ts";
+import type { GraphState } from "../state.ts";
 import Services from "../../services/index.ts";
 
 export function createSchedulerNode() {
@@ -9,9 +9,9 @@ export function createSchedulerNode() {
     try {
       const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.serviceId)).length === 0;
       if (canSchedule) {
-        const userConfirmedSchedule = state.data?.userConfirmed;
-       
-        if (userConfirmedSchedule) {
+        const userConfirmedSchedule = state.data?.userConfirmedSchedule;
+
+        if (userConfirmedSchedule === true) {
           newSchedule = await Service.Schedule.createSchedule({
             user_id: data.userId,
             service_id: data.serviceId,
@@ -28,6 +28,13 @@ export function createSchedulerNode() {
               serviceName: data.serviceName,
               newSchedule
             }
+          };
+        }
+
+        if (userConfirmedSchedule === false) {
+          return {
+            ...state,
+            scenario: 'schedule_disagree',
           };
         }
 

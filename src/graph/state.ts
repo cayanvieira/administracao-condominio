@@ -22,7 +22,7 @@ export const ScheduleGraphSchema = z.object({
   scenario: z.string().optional(),
   details: z.custom<any>().optional(),
   scheduleSuccess: z.boolean().optional(),
-  userConfirmed: z.boolean().optional(),
+  userConfirmationSchedule: z.boolean().optional(),
 });
 
 export type GraphState = z.infer<typeof ScheduleGraphSchema>;
