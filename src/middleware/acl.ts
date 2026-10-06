@@ -39,7 +39,7 @@ export const ACL = {
     listSchedules: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ALL_ROLES },
     createSchedule: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ['morador', 'sindico'] },
     updateSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
-    deleteSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
+    deleteSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ['admin'] },
   },
 } as const
 

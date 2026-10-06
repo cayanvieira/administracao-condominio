@@ -165,10 +165,6 @@ const Routers = (server: FastifyInstance) => {
       const schedule = await findScheduleInCondominium(scheduleId, condominiumId)
       if (!schedule) return reply.code(404).send({ message: 'Reserva nao encontrada' })
 
-      const isOwner = schedule.user_id === request.user.userId
-      const isSindico = rolesInCondominium(request.user.condominiums, condominiumId).includes('sindico')
-      if (!isOwner && !isSindico) return reply.code(403).send({ message: 'Usuario sem permissao' })
-
       await Service.Schedule.deleteSchedule(scheduleId)
       return reply.code(204).send()
     } catch (error) {
