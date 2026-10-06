@@ -26,7 +26,7 @@ function normalizeIntentResponse(
   const matchedCondominium = condominiums.find((condominium) =>
     condominium.id === rawCondominiumId
     || condominium.name.toLowerCase() === rawCondominiumName.toLowerCase(),
-  ) ?? (condominiums.length === 1 ? condominiums[0] : undefined);
+  );
 
   const normalized = {
     intent: typeof payload.intent === "string" ? payload.intent : "unknown",
@@ -40,11 +40,11 @@ function normalizeIntentResponse(
         : matchedService?.name ?? null,
       condominiumIdIntent: matchedCondominium?.id ?? null,
       condominiumName: matchedCondominium?.name ?? null,
-    userId: (typeof payload.userId === "number" ? payload.userId : state.userId ?? null) as number | null,
+    userId: typeof payload.userId === "number" ? payload.userId : state.userId ?? null,
     userName:
-      (typeof payload.userName === "string" && payload.userName.trim().length > 0
+      typeof payload.userName === "string" && payload.userName.trim().length > 0
         ? payload.userName.trim()
-        : state.userName ?? null) as string | null,
+        : state.userName ?? null,
     scheduleDate:
       typeof payload.scheduleDate === "string" && payload.scheduleDate.trim().length > 0
         ? payload.scheduleDate
@@ -165,40 +165,16 @@ export function createIdentifyIntentNode() {
         amenitys,
         condominiums,
       );
-
-      if (
-        normalized.document
-        && ["schedule", "cancel", "modify"].includes(normalized.intent)
-        && normalized.condominiumIdIntent
-      ) {
-        const callerRole = await Service.Condominium.findUserRole(normalized.condominiumIdIntent, state.userId);
-        if (callerRole?.trim().toLowerCase() === "sindico") {
-          const members = await Service.Condominium.findUsers(normalized.condominiumIdIntent);
-          const resident = members.find((member) =>
-            member.role === "morador" && member.document === normalized.document,
-          );
-          if (resident) {
-            normalized.userId = resident.user_id;
-            normalized.userName = resident.name;
-          } else {
-            normalized.userId = null;
-            normalized.userName = null;
-          }
-        }
-      }
-
-      const userConfirmedSchedule = typeof state.data?.userConfirmedSchedule === "boolean"
-        ? state.data.userConfirmedSchedule
-        : undefined;
+     
 
       const { missingFields, invalidFields } = validateIntentData(normalized);
 
       return {
         ...state,
-        data: { ...normalized, userConfirmedSchedule },
+        data: normalized,
         missingFields,
         invalidFields,
-        isMissingFields : missingFields.length > 0
+        isMissingFields : missingFields.length > 0 
       };
     } catch (error) {
       console.error("❌ Error in identifyIntent node:", error);
