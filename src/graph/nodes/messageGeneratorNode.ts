@@ -39,7 +39,7 @@ export function createMessageGeneratorNode() {
           (field: string) => fieldLabels[field] ?? field,
         );
 
-        return await askAboutMissingFields(state, normalizedFields, Service)
+        return askAboutMissingFields(state, normalizedFields, Service)
 
       }
 

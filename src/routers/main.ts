@@ -35,7 +35,7 @@ const Routers = (server: FastifyInstance) => {
         return reply.send(response);
       } catch (error) {
         console.error("Error handling /chat request:", error);
-        return reply.code(500).send({ message: "Erro interno do servidor" });
+        return reply.code(500);
       }
     },
   );
