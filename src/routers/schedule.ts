@@ -21,6 +21,7 @@ const scheduleListQuery = z.object({
 const scheduleInput = z.object({
   serviceId: z.number().int().positive(),
   reservationDate: z.coerce.date(),
+  forResident: z.string().trim().min(1).optional(),
 })
 const scheduleUpdate = z.object({
   reservationDate: z.coerce.date().optional(),
@@ -53,6 +54,20 @@ const findScheduleInCondominium = async (scheduleId: number, condominiumId: numb
   return amenity ? schedule : undefined
 }
 
+const findResidentByIdentifier = async (condominiumId: number, identifier: string) => {
+  const needle = identifier.trim().toLowerCase()
+  const members = await Service.Condominium.findUsers(condominiumId)
+
+  return members.find((member) => (
+    member.role === 'morador'
+    && (
+      member.document.toLowerCase() === needle
+      || member.email?.toLowerCase() === needle
+      || member.name.toLowerCase() === needle
+    )
+  ))
+}
+
 const Routers = (server: FastifyInstance) => {
   server.get('/:condominiumId/schedules', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.listSchedules)] }, async (request, reply) => {
     const parsedId = condominiumIdParam.safeParse(request.params)
@@ -80,16 +95,27 @@ const Routers = (server: FastifyInstance) => {
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados da reserva invalidos' })
 
     const { condominiumId } = parsedId.data
-    const { serviceId, reservationDate } = parsedBody.data
+    const { serviceId, reservationDate, forResident } = parsedBody.data
 
     try {
+      let targetUserId = request.user.userId
+
+      if (forResident) {
+        const isSindico = rolesInCondominium(request.user.condominiums, condominiumId).includes('sindico')
+        if (!isSindico) return reply.code(403).send({ message: 'Somente o sindico pode reservar para outro morador' })
+
+        const resident = await findResidentByIdentifier(condominiumId, forResident)
+        if (!resident) return reply.code(404).send({ message: 'Morador nao encontrado' })
+        targetUserId = resident.user_id
+      }
+
       const amenity = await Service.CondominiumAmenitys.findAmenityById(serviceId, condominiumId)
       if (!amenity) return reply.code(404).send({ message: 'Amenity nao encontrado' })
       if (!amenity.can_schedule) return reply.code(422).send({ message: 'Este amenity nao aceita reservas' })
       if (await hasConflict(reservationDate, serviceId)) return reply.code(409).send({ message: 'Horario indisponivel' })
 
       const schedule = await Service.Schedule.createSchedule({
-        user_id: request.user.userId,
+        user_id: targetUserId,
         service_id: serviceId,
         reservation_date: reservationDate,
       })
@@ -124,6 +150,23 @@ const Routers = (server: FastifyInstance) => {
         ...(active !== undefined && { active }),
       })
       return reply.send(updated)
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
+  server.delete('/:condominiumId/schedules/:scheduleId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.deleteSchedule)] }, async (request, reply) => {
+    const parsedParams = scheduleParam.safeParse(request.params)
+    if (!parsedParams.success) return reply.code(400).send({ message: 'Dados da reserva invalidos' })
+
+    const { condominiumId, scheduleId } = parsedParams.data
+
+    try {
+      const schedule = await findScheduleInCondominium(scheduleId, condominiumId)
+      if (!schedule) return reply.code(404).send({ message: 'Reserva nao encontrada' })
+
+      await Service.Schedule.deleteSchedule(scheduleId)
+      return reply.code(204).send()
     } catch (error) {
       return sendError(reply, error)
     }
