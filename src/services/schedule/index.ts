@@ -61,6 +61,18 @@ export class ScheduleService {
     return this.database<Schedule>('schedules').where({ amenity_id: amenityId }).select('*')
   }
 
+  async findActiveSchedulesByAmenityBetweenDates(
+    amenityId: number,
+    start: Date,
+    endExclusive: Date,
+  ): Promise<Schedule[]> {
+    return this.database<Schedule>('schedules')
+      .where({ amenity_id: amenityId, active: true })
+      .where('reservation_date', '>=', start)
+      .where('reservation_date', '<', endExclusive)
+      .select('*')
+  }
+
   async findScheduleByDate(date: Date , amenityId: number): Promise<Schedule[]> {
     const targetDate = new Date(date) 
     const hours = targetDate.getHours() // Ensure the date is in the correct format

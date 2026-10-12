@@ -49,23 +49,60 @@ export const acl = (route: AclRoute): preHandlerHookHandler => async (request, r
   }
 
   const params = request.params as { condominiumId?: string } | undefined
-  const body = request.body as { condominiumId?: number; condominiumIds?: number[] } | undefined
+  const body = request.body as {
+    condominiumId?: number
+    condominiumIds?: number[]
+    userId?: number
+  } | undefined
   const rawCondominiumId = params?.condominiumId ?? body?.condominiumId
   const condominiumId = rawCondominiumId === undefined ? undefined : Number(rawCondominiumId)
 
+  if (condominiumId !== undefined && (!Number.isInteger(condominiumId) || condominiumId < 1)) {
+    return reply.code(400).send({ message: 'Id do condominio invalido' })
+  }
+
+  const providedCondominiumIds = new Set<number>()
   if (condominiumId !== undefined) {
-    if (!Number.isInteger(condominiumId) || condominiumId < 1) {
+    providedCondominiumIds.add(condominiumId)
+  }
+  for (const item of body?.condominiumIds ?? []) {
+    const parsed = Number(item)
+    if (!Number.isInteger(parsed) || parsed < 1) {
       return reply.code(400).send({ message: 'Id do condominio invalido' })
     }
+    providedCondominiumIds.add(parsed)
   }
 
   const authenticatedRequest = request as typeof request & {
-    user?: { condominiums: CondominiumMembership[] }
+    user?: {
+      userId?: number
+      condominiums: CondominiumMembership[]
+    }
   }
-  const hasPermission = authenticatedRequest.user?.condominiums.some((membership: CondominiumMembership) => (
-    (condominiumId === undefined || membership.condominiumId === condominiumId)
-    && route.roles.includes(membership.role)
-  ))
+
+  if (route.url === ACL.main.chat.url) {
+    const requestedUserId = body?.userId
+    if (requestedUserId !== undefined && authenticatedRequest.user?.userId !== requestedUserId) {
+      return reply.code(403).send({ message: 'Usuario sem permissao' })
+    }
+  }
+
+  if (providedCondominiumIds.size > 0) {
+    const hasPermission = [...providedCondominiumIds].every((id) =>
+      authenticatedRequest.user?.condominiums.some((membership: CondominiumMembership) => (
+        membership.condominiumId === id && route.roles.includes(membership.role)
+      )),
+    )
+
+    if (!hasPermission) {
+      return reply.code(403).send({ message: 'Usuario sem permissao' })
+    }
+    return
+  }
+
+  const hasPermission = authenticatedRequest.user?.condominiums.some((membership: CondominiumMembership) =>
+    route.roles.includes(membership.role),
+  )
 
   if (!hasPermission) {
     return reply.code(403).send({ message: 'Usuario sem permissao' })

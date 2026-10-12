@@ -2,6 +2,14 @@ import type { GraphState }  from "../state.ts";
 import Services from "../../services/index.ts";
 import { getSystemPrompt, getUserPromptTemplate, IntentSchema } from "../../prompts/v1/identifyIntent.ts";
 
+const normalizeText = (value: string): string =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+
+const isAmenityDurationQuestion = (question: string): boolean => {
+  const normalizedQuestion = normalizeText(question);
+  return /\b(quanto tempo|quantas horas|duracao|tempo minimo|minimo de horas|horas minimas|tempo de reserva|periodo de reserva|tempo para alugar|tempo para reservar|devo alugar por)\b/.test(normalizedQuestion);
+};
+
 function normalizeIntentResponse(
   payload: Record<string, unknown>,
   state: GraphState,
@@ -55,6 +63,18 @@ function normalizeIntentResponse(
       typeof payload.newScheduleDate === "string" && payload.newScheduleDate.trim().length > 0
         ? payload.newScheduleDate
         : null,
+    consultationStartDate:
+      typeof payload.consultationStartDate === "string" && payload.consultationStartDate.trim().length > 0
+        ? payload.consultationStartDate
+        : null,
+    consultationEndDate:
+      typeof payload.consultationEndDate === "string" && payload.consultationEndDate.trim().length > 0
+        ? payload.consultationEndDate
+        : null,
+    consultationDateTime:
+      typeof payload.consultationDateTime === "string" && payload.consultationDateTime.trim().length > 0
+        ? payload.consultationDateTime
+        : null,
     reason:
       typeof payload.reason === "string" && payload.reason.trim().length > 0
         ? payload.reason
@@ -82,8 +102,7 @@ function validateIntentData(data: any) {
   switch (intent) {
     case "schedule":
     case "cancel":
-    case "modify":
-    case "consult": {
+    case "modify": {
       if (!data.amenityId) {
         missingFields.push("amenityId");
         invalidFields.push("amenityName","amenityId");
@@ -110,6 +129,13 @@ function validateIntentData(data: any) {
       if (intent === "modify" && !data.newScheduleDate) {
         missingFields.push("newScheduleDate");
         invalidFields.push("newScheduleDate");
+      }
+      break;
+    }
+    case "consult": {
+      if (!data.condominiumIdIntent || !data.condominiumName) {
+        missingFields.push("condominiumIdIntent");
+        invalidFields.push("condominiumIdIntent");
       }
       break;
     }
@@ -165,6 +191,18 @@ export function createIdentifyIntentNode() {
         amenities,
         condominiums,
       );
+      if (isAmenityDurationQuestion(input)) {
+        const normalizedQuestion = normalizeText(input);
+        const requestedAmenity = amenities.find((amenity) =>
+          normalizedQuestion.includes(normalizeText(amenity.name)),
+        );
+
+        normalized.intent = "consult";
+        if (requestedAmenity) {
+          normalized.amenityId = requestedAmenity.id;
+          normalized.amenityName = requestedAmenity.name;
+        }
+      }
 
       if (
         normalized.document

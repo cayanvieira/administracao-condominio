@@ -61,6 +61,30 @@ describe('rotas básicas e chat', () => {
     expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
   })
 
+  it('rejeita consulta de condomínio fora dos vínculos do usuário autenticado', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/main/chat',
+      headers: authHeaders(),
+      payload: { question: 'Aqui possui churrasqueira?', userId: 1, condominiumIds: [2] },
+    })
+
+    expect(response.statusCode).toBe(403)
+    expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
+  })
+
+  it('não permite consultar usando o ID de outro usuário', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/main/chat',
+      headers: authHeaders(),
+      payload: { question: 'Aqui possui churrasqueira?', userId: 2, condominiumIds: [1] },
+    })
+
+    expect(response.statusCode).toBe(403)
+    expect(scheduleGraph.handleQuestion).not.toHaveBeenCalled()
+  })
+
   it('exige usuário e condomínio no chat', async () => {
     const response = await app.inject({
       method: 'POST',

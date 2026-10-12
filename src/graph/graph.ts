@@ -5,6 +5,7 @@ import { createIdentifyIntentNode } from "./nodes/identifyIntentNode.ts";
 import { createSchedulerNode } from "./nodes/schedulerNode.ts";
 import { createScheduleMutationNode } from "./nodes/scheduleMutationNode.ts";
 import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
+import { createConsultationNode } from "./nodes/consultationNode.ts";
 
 
 export function buildScheduleGraph() {
@@ -14,6 +15,7 @@ export function buildScheduleGraph() {
     .addNode("identifyIntent", createIdentifyIntentNode())
     .addNode('schedule', createSchedulerNode())
     .addNode('scheduleMutation', createScheduleMutationNode())
+    .addNode('consultation', createConsultationNode())
     .addNode('message', createMessageGeneratorNode())
 
 
@@ -35,13 +37,18 @@ export function buildScheduleGraph() {
       },
       {
         schedule: 'schedule',
+        consult: 'consultation',
         cancel: 'scheduleMutation',
         modify: 'scheduleMutation',
+        notify: 'message',
+        complaint: 'message',
+        unknown: 'message',
         message: 'message',
       }
     )
     .addEdge('schedule', 'message')
     .addEdge('scheduleMutation', 'message')
+    .addEdge('consultation', 'message')
 
     .addEdge("message", END);
 
