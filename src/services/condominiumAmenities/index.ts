@@ -16,38 +16,38 @@ export type CreateCondominiumAmenity = Pick<
 >
 export type UpdateCondominiumAmenity = Partial<CreateCondominiumAmenity>
 
-export class CondominiumAmenitysService {
+export class CondominiumAmenitiesService {
   private readonly database: Knex
 
   constructor(database: Knex) {
     this.database = database
   }
 
-  async findAllAmenitys(): Promise<CondominiumAmenity[]> {
-    return this.database<CondominiumAmenity>('amenitys')
+  async findAllAmenities(): Promise<CondominiumAmenity[]> {
+    return this.database<CondominiumAmenity>('amenities')
       .select('*')
   }
 
-  async findAllAmenitysByCondominiumIds(condominiumIds: number[]): Promise<CondominiumAmenity[]> {
+  async findAllAmenitiesByCondominiumIds(condominiumIds: number[]): Promise<CondominiumAmenity[]> {
     if (condominiumIds.length === 0) return []
 
-    return this.database<CondominiumAmenity>('amenitys')
+    return this.database<CondominiumAmenity>('amenities')
       .whereIn('condominium_id', condominiumIds)
-      .join('condominiums', 'amenitys.condominium_id', 'condominiums.id')
-      .select('amenitys.*', 'condominiums.name as condominium_name')
+      .join('condominiums', 'amenities.condominium_id', 'condominiums.id')
+      .select('amenities.*', 'condominiums.name as condominium_name')
   }
      
 
   async findAmenityById(id: number, condominiumId: number): Promise<CondominiumAmenity | undefined> {
-    return this.database<CondominiumAmenity>('amenitys').where({ id, condominium_id: condominiumId }).first()
+    return this.database<CondominiumAmenity>('amenities').where({ id, condominium_id: condominiumId }).first()
   }
 
   async createAmenity(condominiumId: number, amenity: CreateCondominiumAmenity): Promise<CondominiumAmenity> {
-    const [createdService] = await this.database<CondominiumAmenity>('amenitys')
+    const [createdAmenity] = await this.database<CondominiumAmenity>('amenities')
       .insert({ ...amenity, condominium_id: condominiumId })
       .returning('*')
 
-    return createdService
+    return createdAmenity
   }
 
   async updateAmenity(
@@ -55,16 +55,16 @@ export class CondominiumAmenitysService {
     condominiumId: number,
     amenity: UpdateCondominiumAmenity,
   ): Promise<CondominiumAmenity | undefined> {
-    const [updatedService] = await this.database<CondominiumAmenity>('amenitys')
+    const [updatedAmenity] = await this.database<CondominiumAmenity>('amenities')
       .where({ id, condominium_id: condominiumId })
       .update({ ...amenity, updated_at: this.database.fn.now() })
       .returning('*')
 
-    return updatedService
+    return updatedAmenity
   }
 
   async deleteAmenity(id: number, condominiumId: number): Promise<boolean> {
-    const deletedRows = await this.database<CondominiumAmenity>('amenitys')
+    const deletedRows = await this.database<CondominiumAmenity>('amenities')
       .where({ id, condominium_id: condominiumId })
       .del()
 

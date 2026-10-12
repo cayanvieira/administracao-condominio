@@ -4,7 +4,7 @@ import { ScheduleGraphService } from './scheduleGraph/index.ts'
 import { ScheduleService } from './schedule/index.ts'
 
 import database from '../database/knex.ts'
-import { CondominiumAmenitysService } from './condominiumAmenitys/index.ts'
+import { CondominiumAmenitiesService } from './condominiumAmenities/index.ts'
 import { CondominiumService } from './condominium/index.ts'
 import { UserService } from './user/index.ts'
 import { AccountService } from './account/index.ts'
@@ -18,7 +18,7 @@ class Service {
   #User?: UserService
   #Account?: AccountService
   #Email?: EmailService
-  #CondominiumAmenitys?: CondominiumAmenitysService
+  #CondominiumAmenities?: CondominiumAmenitiesService
   #Condominium?: CondominiumService
 
   get OpenRouter(): OpenRouterService {
@@ -45,8 +45,8 @@ class Service {
     return this.#Email ??= new EmailService()
   }
 
-  get CondominiumAmenitys(): CondominiumAmenitysService {
-    return this.#CondominiumAmenitys ??= new CondominiumAmenitysService(database)
+  get CondominiumAmenities(): CondominiumAmenitiesService {
+    return this.#CondominiumAmenities ??= new CondominiumAmenitiesService(database)
   }
 
   get Condominium(): CondominiumService {

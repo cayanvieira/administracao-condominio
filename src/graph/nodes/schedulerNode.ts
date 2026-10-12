@@ -7,14 +7,14 @@ export function createSchedulerNode() {
     const data = state.data;
     let newSchedule
     try {
-      const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.serviceId)).length === 0;
+      const canSchedule = (await Service.Schedule.findScheduleByDate(new Date(data.scheduleDate), data.amenityId)).length === 0;
       if (canSchedule) {
         const userConfirmedSchedule = state.data?.userConfirmedSchedule;
 
         if (userConfirmedSchedule === true) {
           newSchedule = await Service.Schedule.createSchedule({
             user_id: data.userId,
-            service_id: data.serviceId,
+            amenity_id: data.amenityId,
             reservation_date: new Date(data.scheduleDate)
           });
 
@@ -25,7 +25,7 @@ export function createSchedulerNode() {
             details: {
               userName: data.userName,
               scheduleDate: data.scheduleDate,
-              serviceName: data.serviceName,
+              amenityName: data.amenityName,
               newSchedule
             }
           };
@@ -44,7 +44,7 @@ export function createSchedulerNode() {
           details: {
             userName: data.userName,
             scheduleDate: data.scheduleDate,
-            serviceName: data.serviceName,
+            amenityName: data.amenityName,
           }
         };
 
@@ -58,7 +58,7 @@ export function createSchedulerNode() {
           details: {
             userName: data.userName,
             scheduleDate: data.scheduleDate,
-            serviceName: data.serviceName,
+            amenityName: data.amenityName,
             reason: "The selected date and time is already booked or is unavailable. Please choose a different slot."
           },
         }
