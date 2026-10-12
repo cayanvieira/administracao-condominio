@@ -88,22 +88,39 @@ export class OpenRouterService {
         );
       }
       const rawContent = response.choices.at(0)?.message.content;
+      const rawText = typeof rawContent === "string" ? rawContent.trim() : "";
       const parsedContent = parseJsonResponse(
         typeof rawContent === 'string'
           ? rawContent
           : undefined
       );
+      const messageContent = stepName === "messageGeneratorNode"
+        ? typeof parsedContent.content === "string"
+          ? parsedContent
+          : typeof parsedContent.message === "string"
+            ? { content: parsedContent.message }
+            : typeof parsedContent.answer === "string"
+              ? { content: parsedContent.answer }
+              : rawText
+                ? { content: rawText }
+                : parsedContent
+        : parsedContent;
+      const validatedContent = schema.safeParse(messageContent);
+      if (!validatedContent.success) {
+        throw new Error(`Invalid structured response from ${stepName}: ${validatedContent.error.message}`);
+      }
+      const content = validatedContent.data as Record<string, unknown>;
 
       if(stepName === "identifyIntentNode") {
         return {
           model: response.model,
-          content: parsedContent?.intent ? parsedContent : { intent: "unknown" },
+          content: content.intent ? content : { intent: "unknown" },
         };
       }
       if(stepName === "messageGeneratorNode") {
         return {
           model: response.model,
-          content: parsedContent
+          content
         };
       }
 
