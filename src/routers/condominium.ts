@@ -140,19 +140,19 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.get('/:condominiumId/amenitys', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.listAmenitys)] }, async (request, reply) => {
+  server.get('/:condominiumId/amenities', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.listAmenities)] }, async (request, reply) => {
     const parsed = condominiumIdParam.safeParse(request.params)
     if (!parsed.success) return reply.code(400).send({ message: 'Id do condominio invalido' })
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      return reply.send(await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds([parsed.data.condominiumId]))
+      return reply.send(await Service.CondominiumAmenities.findAllAmenitiesByCondominiumIds([parsed.data.condominiumId]))
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.get('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.findAmenity)] }, async (request, reply) => {
+  server.get('/:condominiumId/amenities/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.findAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
       amenityId: z.coerce.number().int().positive(),
@@ -161,7 +161,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const amenity = await Service.CondominiumAmenitys.findAmenityById(parsed.data.amenityId, parsed.data.condominiumId)
+      const amenity = await Service.CondominiumAmenities.findAmenityById(parsed.data.amenityId, parsed.data.condominiumId)
       if (!amenity) return reply.code(404).send({ message: 'Servico nao encontrado' })
       return reply.send(amenity)
     } catch (error) {
@@ -169,20 +169,20 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.post('/:condominiumId/amenitys', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.createAmenity)] }, async (request, reply) => {
+  server.post('/:condominiumId/amenities', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.createAmenity)] }, async (request, reply) => {
     const parsedId = condominiumIdParam.safeParse(request.params)
     const parsedBody = amenityInput.safeParse(request.body)
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do servico invalidos' })
 
     try {
       await Service.Condominium.findById(parsedId.data.condominiumId)
-      return reply.code(201).send(await Service.CondominiumAmenitys.createAmenity(parsedId.data.condominiumId, parsedBody.data))
+      return reply.code(201).send(await Service.CondominiumAmenities.createAmenity(parsedId.data.condominiumId, parsedBody.data))
     } catch (error) {
       return sendError(reply, error)
     }
   })
 
-  server.patch('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.updateAmenity)] }, async (request, reply) => {
+  server.patch('/:condominiumId/amenities/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.updateAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
       amenityId: z.coerce.number().int().positive(),
@@ -192,7 +192,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const amenity = await Service.CondominiumAmenitys.updateAmenity(parsed.data.amenityId, parsed.data.condominiumId, parsedBody.data)
+      const amenity = await Service.CondominiumAmenities.updateAmenity(parsed.data.amenityId, parsed.data.condominiumId, parsedBody.data)
       if (!amenity) return reply.code(404).send({ message: 'Amenity nao encontrado' })
       return reply.send(amenity)
     } catch (error) {
@@ -200,7 +200,7 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
-  server.delete('/:condominiumId/amenitys/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.removeAmenity)] }, async (request, reply) => {
+  server.delete('/:condominiumId/amenities/:amenityId', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.removeAmenity)] }, async (request, reply) => {
     const parsed = z.object({
       condominiumId: z.coerce.number().int().positive(),
       amenityId: z.coerce.number().int().positive(),
@@ -209,7 +209,7 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
-      const deleted = await Service.CondominiumAmenitys.deleteAmenity(parsed.data.amenityId, parsed.data.condominiumId)
+      const deleted = await Service.CondominiumAmenities.deleteAmenity(parsed.data.amenityId, parsed.data.condominiumId)
       if (!deleted) return reply.code(404).send({ message: 'Amenity nao encontrado' })
       return reply.code(204).send()
     } catch (error) {

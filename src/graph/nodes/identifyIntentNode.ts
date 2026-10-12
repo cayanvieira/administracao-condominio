@@ -5,16 +5,16 @@ import { getSystemPrompt, getUserPromptTemplate, IntentSchema } from "../../prom
 function normalizeIntentResponse(
   payload: Record<string, unknown>,
   state: GraphState,
-  services: Array<{ id: number; name: string }>
+  amenities: Array<{ id: number; name: string }>
   , condominiums: Array<{ id: number; name: string }>
 ) {
-  const rawServiceName =
-    typeof payload.serviceName === "string" ? payload.serviceName.trim() : "";
+  const rawAmenityName =
+    typeof payload.amenityName === "string" ? payload.amenityName.trim() : "";
 
-  const matchedService =
-    rawServiceName.length > 0
-      ? services.find((service) =>
-          service.name.toLowerCase() === rawServiceName.toLowerCase(),
+  const matchedAmenity =
+    rawAmenityName.length > 0
+      ? amenities.find((amenity) =>
+          amenity.name.toLowerCase() === rawAmenityName.toLowerCase(),
         )
       : undefined;
   const rawCondominiumName = typeof payload.condominiumName === "string"
@@ -30,14 +30,14 @@ function normalizeIntentResponse(
 
   const normalized = {
     intent: typeof payload.intent === "string" ? payload.intent : "unknown",
-    serviceId:
-      typeof payload.serviceId === "number"
-        ? payload.serviceId
-        : matchedService?.id ?? null,
-    serviceName:
-      typeof payload.serviceName === "string" && payload.serviceName.trim().length > 0
-        ? payload.serviceName.trim()
-        : matchedService?.name ?? null,
+    amenityId:
+      typeof payload.amenityId === "number"
+        ? payload.amenityId
+        : matchedAmenity?.id ?? null,
+    amenityName:
+      typeof payload.amenityName === "string" && payload.amenityName.trim().length > 0
+        ? payload.amenityName.trim()
+        : matchedAmenity?.name ?? null,
       condominiumIdIntent: matchedCondominium?.id ?? null,
       condominiumName: matchedCondominium?.name ?? null,
     userId: (typeof payload.userId === "number" ? payload.userId : state.userId ?? null) as number | null,
@@ -84,12 +84,12 @@ function validateIntentData(data: any) {
     case "cancel":
     case "modify":
     case "consult": {
-      if (!data.serviceId) {
-        missingFields.push("serviceId");
-        invalidFields.push("serviceName","serviceId");
+      if (!data.amenityId) {
+        missingFields.push("amenityId");
+        invalidFields.push("amenityName","amenityId");
       }
-      if (!data.serviceName) {
-        missingFields.push("serviceName");
+      if (!data.amenityName) {
+        missingFields.push("amenityName");
       }
       if (!data.userId) {
         missingFields.push("userId");
@@ -141,14 +141,14 @@ export function createIdentifyIntentNode() {
     if (state.condominiumIds.length === 0) {
       return {
         ...state,
-        error: "Condominium context is required to identify services.",
+        error: "Condominium context is required to identify amenities.",
       };
     }
     const condominiumIds = state.condominiumIds
     const condominiums = await Promise.all(condominiumIds.map(async (id:number) => Service.Condominium.findById(id)))
-    const amenitys = await Service.CondominiumAmenitys.findAllAmenitysByCondominiumIds(condominiumIds);
+    const amenities = await Service.CondominiumAmenities.findAllAmenitiesByCondominiumIds(condominiumIds);
     const userId = await Service.User.findUserById(state.userId)
-    const systemPrompt = getSystemPrompt(amenitys, userId, condominiumIds, condominiums);
+    const systemPrompt = getSystemPrompt(amenities, userId, condominiumIds, condominiums);
     const userPrompt = getUserPromptTemplate(input, previousData);
   
     const data = await Service.OpenRouter.generate(
@@ -162,7 +162,7 @@ export function createIdentifyIntentNode() {
       const normalized = normalizeIntentResponse(
         (data.content ?? {}) as Record<string, unknown>,
         state,
-        amenitys,
+        amenities,
         condominiums,
       );
 

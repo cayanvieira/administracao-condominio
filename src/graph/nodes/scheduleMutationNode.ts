@@ -15,7 +15,7 @@ export function createScheduleMutationNode() {
       const targetUserId = isSyndic && data.userId ? data.userId : state.userId;
       const schedule = await Service.Schedule.findScheduleByUserAndDate(
         targetUserId,
-        data.serviceId,
+        data.amenityId,
         new Date(data.scheduleDate),
       );
 
@@ -27,7 +27,7 @@ export function createScheduleMutationNode() {
           details: {
             userName: data.userName,
             scheduleDate: data.scheduleDate,
-            serviceName: data.serviceName,
+            amenityName: data.amenityName,
             reason: "No active reservation was found with the provided information.",
           },
         };
@@ -46,7 +46,7 @@ export function createScheduleMutationNode() {
           scheduleDate: data.intent === "modify"
             ? data.newScheduleDate
             : data.scheduleDate,
-          serviceName: data.serviceName,
+          amenityName: data.amenityName,
           updatedSchedule,
           reason: updatedSchedule
             ? undefined
@@ -73,7 +73,7 @@ async function updateReservation(
   const targetDate = new Date(data.newScheduleDate);
   const conflictingSchedules = await Service.Schedule.findScheduleByDate(
     targetDate,
-    data.serviceId,
+    data.amenityId,
   );
 
   if (conflictingSchedules.some((schedule) => schedule.id !== scheduleId)) {

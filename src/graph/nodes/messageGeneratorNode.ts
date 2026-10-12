@@ -12,8 +12,8 @@ import { getSystemPrompt as getSystemPromptMessageGenerator, getUserPromptTempla
 
 
 const fieldLabels: Record<string, string> = {
-  serviceId: 'o serviço',
-  serviceName: 'o nome do serviço',
+  amenityId: 'a amenidade',
+  amenityName: 'o nome da amenidade',
   userName: 'o seu nome',
   scheduleDate: 'a data e o horário',
   newScheduleDate: 'a nova data e o novo horário da reserva',

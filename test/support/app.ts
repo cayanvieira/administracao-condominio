@@ -21,7 +21,7 @@ export const condominiumService = {
 }
 
 export const condominiumServices = {
-  findAllAmenitysByCondominiumIds: jest.fn<(...args: any[]) => any>(),
+  findAllAmenitiesByCondominiumIds: jest.fn<(...args: any[]) => any>(),
   findAmenityById: jest.fn<(...args: any[]) => any>(),
   createAmenity: jest.fn<(...args: any[]) => any>(),
   updateAmenity: jest.fn<(...args: any[]) => any>(),
@@ -36,8 +36,7 @@ jest.unstable_mockModule('../../src/services/index.ts', () => ({
   default: class MockServices {
     get Account() { return accountService }
     get Condominium() { return condominiumService }
-    get CondominiumAmenitys() { return condominiumServices }
-    get CondominiumAmenitysServices() { return condominiumServices }
+    get CondominiumAmenities() { return condominiumServices }
     get ScheduleGraph() { return scheduleGraph }
   },
 }))
@@ -62,7 +61,7 @@ export function resetMocks() {
   condominiumService.findUsers.mockResolvedValue([{ user_id: 1, role: 'morador' }])
   condominiumService.addUser.mockResolvedValue({ user_id: 1, role: 'morador' })
   condominiumService.removeUser.mockResolvedValue(undefined)
-  condominiumServices.findAllAmenitysByCondominiumIds.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
+  condominiumServices.findAllAmenitiesByCondominiumIds.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
   condominiumServices.findAmenityById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
   condominiumServices.createAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
   condominiumServices.updateAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })

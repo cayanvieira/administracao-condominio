@@ -1,12 +1,12 @@
 export async function seed(knex) {
-  await knex('amenitys').del()
+  await knex('amenities').del()
 
   const condominiums = await knex('condominiums').select('id').orderBy('id')
   if (condominiums.length < 2) {
     throw new Error('Condominios necessarios para o seed de servicos nao encontrados')
   }
 
-  await knex('amenitys').insert([
+  await knex('amenities').insert([
     { condominium_id: condominiums[0].id, name: 'Salão de Festas', minimum_hours: 4, can_schedule: true },
     { condominium_id: condominiums[0].id, name: 'Churrasqueira', minimum_hours: 3, can_schedule: true },
     { condominium_id: condominiums[0].id, name: 'Academia', minimum_hours: 1, can_schedule: true },

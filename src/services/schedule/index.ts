@@ -3,7 +3,7 @@ import type { Knex } from 'knex'
 export type Schedule = {
   id: number
   user_id: number
-  service_id: number
+  amenity_id: number
   reservation_date: Date
   scheduled_at: Date
   active: boolean
@@ -11,8 +11,8 @@ export type Schedule = {
   updated_at: Date
 }
 
-export type CreateSchedule = Pick<Schedule, 'user_id' | 'service_id' | 'reservation_date'>
-export type UpdateSchedule = Partial<Pick<Schedule, 'user_id' | 'service_id' | 'reservation_date' | 'active'>>
+export type CreateSchedule = Pick<Schedule, 'user_id' | 'amenity_id' | 'reservation_date'>
+export type UpdateSchedule = Partial<Pick<Schedule, 'user_id' | 'amenity_id' | 'reservation_date' | 'active'>>
 
 export class ScheduleService {
   private readonly database: Knex
@@ -38,10 +38,10 @@ export class ScheduleService {
     filters: { userId?: number, active?: boolean, from?: Date } = {},
   ): Promise<(Schedule & { amenity_name: string, user_name: string })[]> {
     const query = this.database<Schedule>('schedules')
-      .join('amenitys', 'amenitys.id', 'schedules.service_id')
+      .join('amenities', 'amenities.id', 'schedules.amenity_id')
       .join('users', 'users.id', 'schedules.user_id')
-      .where('amenitys.condominium_id', condominiumId)
-      .select('schedules.*', 'amenitys.name as amenity_name', 'users.name as user_name')
+      .where('amenities.condominium_id', condominiumId)
+      .select('schedules.*', 'amenities.name as amenity_name', 'users.name as user_name')
       .orderBy('schedules.reservation_date')
 
     if (filters.userId !== undefined) {
@@ -57,11 +57,11 @@ export class ScheduleService {
     return query
   }
 
-  async findSchedulesByService(serviceId: number): Promise<Schedule[]> {
-    return this.database<Schedule>('schedules').where({ service_id: serviceId }).select('*')
+  async findSchedulesByAmenity(amenityId: number): Promise<Schedule[]> {
+    return this.database<Schedule>('schedules').where({ amenity_id: amenityId }).select('*')
   }
 
-  async findScheduleByDate(date: Date , serviceId: number): Promise<Schedule[]> {
+  async findScheduleByDate(date: Date , amenityId: number): Promise<Schedule[]> {
     const targetDate = new Date(date) 
     const hours = targetDate.getHours() // Ensure the date is in the correct format
     const start = new Date(targetDate)
@@ -72,16 +72,16 @@ export class ScheduleService {
 
     return this.database<Schedule>('schedules')
       .whereBetween('reservation_date', [start.toISOString(), end.toISOString()])
-      .where({ service_id: serviceId, active: true })
+      .where({ amenity_id: amenityId, active: true })
       .select('*')
   }
 
   async findScheduleByUserAndDate(
     userId: number,
-    serviceId: number,
+    amenityId: number,
     date: Date,
   ): Promise<Schedule | undefined> {
-    const schedules = await this.findScheduleByDate(date, serviceId)
+    const schedules = await this.findScheduleByDate(date, amenityId)
 
     return schedules.find((schedule) => schedule.user_id === userId)
   }
