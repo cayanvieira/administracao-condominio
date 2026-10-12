@@ -1,5 +1,5 @@
 import { HumanMessage } from 'langchain'
-import { beforeEach, describe, expect, it } from '@jest/globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { openRouterService, resetMocks } from './support/app.ts'
 
 const { createMessageGeneratorNode } = await import('../src/graph/nodes/messageGeneratorNode.ts')
@@ -48,6 +48,27 @@ describe('mensagem do fluxo de consulta', () => {
     expect(result.messages.at(-1)?.text).toBe(
       'Não consegui gerar uma resposta sobre os dados do condomínio agora. Tente novamente em instantes.',
     )
+  })
+
+  it('usa o fallback sem lançar exceção quando o estado não tem cenário', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const result = await createMessageGeneratorNode()({
+        ...createState(),
+        scenario: undefined,
+      } as never)
+
+      expect(result.messages.at(-1)?.text).toBe(
+        'Ocorreu um erro ao processar sua solicitação. Tente novamente.',
+      )
+      expect(openRouterService.generate).not.toHaveBeenCalled()
+      expect(errorSpy).toHaveBeenCalledWith(
+        'No message generated: state has no scenario or missing fields.',
+        expect.objectContaining({ intent: 'consult', scenario: undefined }),
+      )
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 
   it('responde a duração mínima a partir do dado do condomínio se a LLM falhar', async () => {

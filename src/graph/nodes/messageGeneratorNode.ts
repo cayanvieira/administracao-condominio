@@ -46,6 +46,12 @@ const getConsultationFallback = (state: GraphState): string | undefined => {
   return `A reserva da ${amenity.name} tem duração mínima de ${amenity.minimumHours} horas.`;
 };
 
+const getFallbackMessage = (state: GraphState): string =>
+  getConsultationFallback(state)
+  ?? (state.scenario === 'consultation'
+    ? 'Não consegui gerar uma resposta sobre os dados do condomínio agora. Tente novamente em instantes.'
+    : 'Ocorreu um erro ao processar sua solicitação. Tente novamente.');
+
 export function createMessageGeneratorNode() {
   return async (state: GraphState): Promise<GraphState> => {
     const Service = new Services();
@@ -98,20 +104,22 @@ export function createMessageGeneratorNode() {
         };
       }
 
-
-
-      throw new Error('No message generated: neither missing fields nor scheduling success/failure scenario matched.');
+      console.error('No message generated: state has no scenario or missing fields.', {
+        intent: state.data?.intent,
+        isMissingFields,
+        scenario,
+      });
+      return {
+        ...state,
+        messages: [...state.messages, new AIMessage(getFallbackMessage(state))],
+      };
     } catch (error) {
       console.error('❌ Error in messageGenerator node:', error);
-      const consultationFallback = getConsultationFallback(state);
       return {
         ...state,
         messages: [
           ...state.messages,
-          new AIMessage(consultationFallback ?? (state.scenario === 'consultation'
-            ? 'Não consegui gerar uma resposta sobre os dados do condomínio agora. Tente novamente em instantes.'
-            : 'Ocorreu um erro ao processar sua solicitação. Tente novamente.'),
-          ),
+          new AIMessage(getFallbackMessage(state)),
         ]
       };
     }
