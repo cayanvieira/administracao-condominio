@@ -42,6 +42,8 @@ The system uses a state-graph approach with LangGraph to control the conversatio
 ### Main structure
 
 - `src/graph/graph.ts` — main graph definition
+- `src/graph/nodes/guardrailsNode.ts` — checks for prompt-injection attempts before intent identification
+- `src/prompts/v1/guardrails.ts` — security classification prompt and schema
 - `src/graph/nodes/identifyIntentNode.ts` — node responsible for identifying intent
 - `src/prompts/v1/identifyIntent.ts` — classification prompts and schema
 - `src/services` — domain services such as users, condominium, scheduling, and external integration
@@ -51,9 +53,10 @@ The system uses a state-graph approach with LangGraph to control the conversatio
 
 1. The user sends a message in natural language.
 2. The system captures this text and the author context.
-3. The AI analyzes the message and identifies the intent.
-4. The intent and extracted data are stored in the graph state.
-5. The next phase of the flow will be selected based on this classification.
+3. The guardrail checks whether the message tries to manipulate the assistant's instructions; suspicious messages are blocked before reaching other nodes.
+4. If the message passes the check, the AI identifies the intent.
+5. The intent and extracted data are stored in the graph state.
+6. The next phase of the flow is selected based on this classification.
 
 ## Current phase: intent identification
 

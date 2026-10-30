@@ -123,6 +123,12 @@ export class OpenRouterService {
           content
         };
       }
+      if (stepName === "guardrailsCheckNode") {
+        return {
+          model: response.model,
+          content,
+        };
+      }
 
       throw new Error(`Unsupported step name: ${stepName}`);
     } else {
