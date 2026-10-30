@@ -51,6 +51,7 @@ describe("guardrails de prompt injection", () => {
 
     expect(result.guardrailsCheck).toEqual({ safe: false });
     expect(result.scenario).toBe("guardrails_blocked");
+    expect(result.messages).toHaveLength(2);
     expect(result.messages.at(-1)?.text).toContain(
       "Não posso seguir instruções que tentem alterar as regras do assistente.",
     );
