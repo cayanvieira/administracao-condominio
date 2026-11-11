@@ -23,6 +23,9 @@ export const ScheduleGraphSchema = z.object({
   details: z.custom<any>().optional(),
   scheduleSuccess: z.boolean().optional(),
   userConfirmationSchedule: z.boolean().optional(),
+  guardrailsCheck: z.object({
+    safe: z.boolean()
+  }).optional(),
 });
 
 export type GraphState = z.infer<typeof ScheduleGraphSchema>;

@@ -42,6 +42,8 @@ O sistema utiliza uma abordagem baseada em grafos de estados, com o pacote LangG
 ### Estrutura principal
 
 - `src/graph/graph.ts` — definição do grafo principal
+- `src/graph/nodes/guardrailsNode.ts` — verifica tentativas de prompt injection antes da identificação de intenção
+- `src/prompts/v1/guardrails.ts` — prompt e schema da classificação de segurança
 - `src/graph/nodes/identifyIntentNode.ts` — nó responsável por identificar a intenção
 - `src/prompts/v1/identifyIntent.ts` — prompts e schema de classificação
 - `src/services` — serviços de domínio, como usuários, condomínios, agendamento e integração externa
@@ -51,9 +53,10 @@ O sistema utiliza uma abordagem baseada em grafos de estados, com o pacote LangG
 
 1. O usuário envia uma mensagem em linguagem natural.
 2. O sistema captura esse texto e o contexto do autor.
-3. A IA analisa a mensagem e identifica a intenção.
-4. A intenção e os dados extraídos são armazenados no estado do grafo.
-5. A próxima fase do fluxo será escolhida com base nessa classificação.
+3. O guardrail verifica se a mensagem tenta manipular as instruções do assistente; mensagens suspeitas são bloqueadas antes de outros nós.
+4. Se a mensagem passar pela verificação, a IA identifica a intenção.
+5. A intenção e os dados extraídos são armazenados no estado do grafo.
+6. A próxima fase do fluxo é escolhida com base nessa classificação.
 
 ## Fase atual: identificação da intenção
 
