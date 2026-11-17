@@ -3,6 +3,8 @@ import type { Knex } from 'knex'
 export type Schedule = {
   id: number
   user_id: number
+  createdByUserId: number | null
+  editByUserId: number | null
   amenity_id: number
   reservation_date: Date
   scheduled_at: Date
@@ -11,8 +13,8 @@ export type Schedule = {
   updated_at: Date
 }
 
-export type CreateSchedule = Pick<Schedule, 'user_id' | 'amenity_id' | 'reservation_date'>
-export type UpdateSchedule = Partial<Pick<Schedule, 'user_id' | 'amenity_id' | 'reservation_date' | 'active'>>
+export type CreateSchedule = Pick<Schedule, 'user_id' | 'createdByUserId' | 'amenity_id' | 'reservation_date'>
+export type UpdateSchedule = Partial<Pick<Schedule, 'user_id' | 'amenity_id' | 'reservation_date' | 'active' | 'editByUserId'>>
 
 export class ScheduleService {
   private readonly database: Knex

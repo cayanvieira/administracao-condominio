@@ -14,6 +14,7 @@ export function createSchedulerNode() {
         if (userConfirmedSchedule === true) {
           newSchedule = await Service.Schedule.createSchedule({
             user_id: data.userId,
+            createdByUserId: state.userId,
             amenity_id: data.amenityId,
             reservation_date: new Date(data.scheduleDate)
           });

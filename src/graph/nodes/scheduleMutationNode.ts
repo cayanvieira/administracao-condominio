@@ -34,7 +34,10 @@ export function createScheduleMutationNode() {
       }
 
       const updatedSchedule = data.intent === "cancel"
-        ? await Service.Schedule.updateSchedule(schedule.id, { active: false })
+        ? await Service.Schedule.updateSchedule(schedule.id, {
+            active: false,
+            editByUserId: state.userId,
+          })
         : await updateReservation(Service, state, schedule.id);
 
       return {
@@ -82,5 +85,6 @@ async function updateReservation(
 
   return Service.Schedule.updateSchedule(scheduleId, {
     reservation_date: targetDate,
+    editByUserId: state.userId,
   });
 }

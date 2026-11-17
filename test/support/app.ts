@@ -33,6 +33,10 @@ export const condominiumServices = {
 }
 
 export const scheduleService = {
+  findScheduleByDate: jest.fn<(...args: any[]) => any>(),
+  createSchedule: jest.fn<(...args: any[]) => any>(),
+  findScheduleById: jest.fn<(...args: any[]) => any>(),
+  updateSchedule: jest.fn<(...args: any[]) => any>(),
   findActiveSchedulesByAmenityBetweenDates: jest.fn<(...args: any[]) => any>(),
 }
 
@@ -78,10 +82,20 @@ export function resetMocks() {
   condominiumService.addUser.mockResolvedValue({ user_id: 1, role: 'morador' })
   condominiumService.removeUser.mockResolvedValue(undefined)
   condominiumServices.findAllAmenitiesByCondominiumIds.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
-  condominiumServices.findAmenityById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
+  condominiumServices.findAmenityById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina', can_schedule: true })
   condominiumServices.createAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
   condominiumServices.updateAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })
   condominiumServices.deleteAmenity.mockResolvedValue(true)
+  scheduleService.findScheduleByDate.mockResolvedValue([])
+  scheduleService.createSchedule.mockResolvedValue({
+    id: 1,
+    user_id: 1,
+    createdByUserId: 1,
+    editByUserId: null,
+    amenity_id: 1,
+  })
+  scheduleService.findScheduleById.mockResolvedValue({ id: 1, user_id: 1, amenity_id: 1 })
+  scheduleService.updateSchedule.mockResolvedValue({ id: 1, user_id: 1, amenity_id: 1 })
   scheduleService.findActiveSchedulesByAmenityBetweenDates.mockResolvedValue([])
   openRouterService.generate.mockResolvedValue({ content: { content: 'Resposta de teste.' } })
   scheduleGraph.handleQuestion.mockResolvedValue({ scenario: 'ok' })

@@ -22,6 +22,9 @@ const scheduleInput = z.object({
   amenityId: z.number().int().positive(),
   reservationDate: z.coerce.date(),
   forResident: z.string().trim().min(1).optional(),
+  forUserId: z.number().int().positive().optional(),
+}).refine((body) => !(body.forResident && body.forUserId !== undefined), {
+  message: 'Informe apenas um usuário para a reserva',
 })
 const scheduleUpdate = z.object({
   reservationDate: z.coerce.date().optional(),
@@ -95,15 +98,24 @@ const Routers = (server: FastifyInstance) => {
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados da reserva invalidos' })
 
     const { condominiumId } = parsedId.data
-    const { amenityId, reservationDate, forResident } = parsedBody.data
+    const { amenityId, reservationDate, forResident, forUserId } = parsedBody.data
 
     try {
       let targetUserId = request.user.userId
 
-      if (forResident) {
-        const isSindico = rolesInCondominium(request.user.condominiums, condominiumId).includes('sindico')
-        if (!isSindico) return reply.code(403).send({ message: 'Somente o sindico pode reservar para outro morador' })
+      const isSindico = rolesInCondominium(request.user.condominiums, condominiumId).includes('sindico')
 
+      if (forUserId !== undefined) {
+        if (forUserId !== request.user.userId && !isSindico) {
+          return reply.code(403).send({ message: 'Somente o sindico pode reservar para outro membro' })
+        }
+        const members = await Service.Condominium.findUsers(condominiumId)
+        if (!members.some((member) => member.user_id === forUserId)) {
+          return reply.code(404).send({ message: 'Membro nao encontrado neste condominio' })
+        }
+        targetUserId = forUserId
+      } else if (forResident) {
+        if (!isSindico) return reply.code(403).send({ message: 'Somente o sindico pode reservar para outro morador' })
         const resident = await findResidentByIdentifier(condominiumId, forResident)
         if (!resident) return reply.code(404).send({ message: 'Morador nao encontrado' })
         targetUserId = resident.user_id
@@ -116,6 +128,7 @@ const Routers = (server: FastifyInstance) => {
 
       const schedule = await Service.Schedule.createSchedule({
         user_id: targetUserId,
+        createdByUserId: request.user.userId,
         amenity_id: amenityId,
         reservation_date: reservationDate,
       })
@@ -148,6 +161,7 @@ const Routers = (server: FastifyInstance) => {
       const updated = await Service.Schedule.updateSchedule(scheduleId, {
         ...(reservationDate && { reservation_date: reservationDate }),
         ...(active !== undefined && { active }),
+        editByUserId: request.user.userId,
       })
       return reply.send(updated)
     } catch (error) {

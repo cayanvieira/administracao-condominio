@@ -23,6 +23,7 @@ export type CondominiumUser = {
   name: string
   document: string
   email: string | null
+  unit: string | null
   role: CondominiumRole
   created_at: Date
   updated_at: Date
@@ -106,6 +107,7 @@ export class CondominiumService {
         'users.name',
         'users.document',
         'users.email',
+        'condominium_users.unit',
         'condominium_users.role',
         'condominium_users.created_at',
         'condominium_users.updated_at',
@@ -122,7 +124,12 @@ export class CondominiumService {
     return link?.role
   }
 
-  async addUser(condominiumId: number, userId: number, role: string): Promise<CondominiumUser> {
+  async addUser(
+    condominiumId: number,
+    userId: number,
+    role: string,
+    unit: string | null = null,
+  ): Promise<CondominiumUser> {
     await this.findById(condominiumId)
     const user = await this.database('users').where({ id: userId }).first()
     if (!user) {
@@ -131,7 +138,7 @@ export class CondominiumService {
 
     try {
       const [link] = await this.database('condominium_users')
-        .insert({ condominium_id: condominiumId, user_id: userId, role })
+        .insert({ condominium_id: condominiumId, user_id: userId, role, unit })
         .returning('*')
       return { ...user, ...link, user_id: user.id }
     } catch (error) {

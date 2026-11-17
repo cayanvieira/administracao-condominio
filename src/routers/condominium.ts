@@ -30,6 +30,7 @@ const condominiumUpdate = z.object({
 const userInput = z.object({
   userId: z.number().int().positive(),
   role: z.enum(['sindico', 'morador', 'funcionario']),
+  unit: z.string().trim().min(1).max(50).nullable().optional(),
 })
 const amenityInput = z.object({
   name: z.string().trim().min(1).max(150),
@@ -118,11 +119,11 @@ const Routers = (server: FastifyInstance) => {
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do vinculo invalidos' })
 
     try {
-      return reply.code(201).send(await Service.Condominium.addUser(
-        parsedId.data.condominiumId,
-        parsedBody.data.userId,
-        parsedBody.data.role,
-      ))
+      const { userId, role, unit } = parsedBody.data
+      const linkedUser = unit === undefined
+        ? await Service.Condominium.addUser(parsedId.data.condominiumId, userId, role)
+        : await Service.Condominium.addUser(parsedId.data.condominiumId, userId, role, unit)
+      return reply.code(201).send(linkedUser)
     } catch (error) {
       return sendError(reply, error)
     }

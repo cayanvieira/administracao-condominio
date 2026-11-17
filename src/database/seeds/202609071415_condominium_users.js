@@ -17,13 +17,13 @@ export async function seed(knex) {
   }
 
   await knex('condominium_users').insert([
-    { condominium_id: firstCondominium.id, user_id: ana.id, role: 'morador' },
+    { condominium_id: firstCondominium.id, user_id: ana.id, role: 'morador', unit: '1206A' },
     { condominium_id: firstCondominium.id, user_id: ana.id, role: 'sindico' },
-    { condominium_id: firstCondominium.id, user_id: bruno.id, role: 'morador' },
+    { condominium_id: firstCondominium.id, user_id: bruno.id, role: 'morador', unit: '302' },
     { condominium_id: firstCondominium.id, user_id: carla.id, role: 'sindico' },
     { condominium_id: firstCondominium.id, user_id: eduarda.id, role: 'funcionario' },
     { condominium_id: secondCondominium.id, user_id: ana.id, role: 'sindico' },
-    { condominium_id: secondCondominium.id, user_id: diego.id, role: 'morador' },
+    { condominium_id: secondCondominium.id, user_id: diego.id, role: 'morador', unit: 'Bloco B - 1201' },
     { condominium_id: secondCondominium.id, user_id: eduarda.id, role: 'funcionario' },
   ])
 }
