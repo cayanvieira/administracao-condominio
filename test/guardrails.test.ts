@@ -7,13 +7,14 @@ const { createGuardrailsCheckNode } = await import(
 );
 const { buildScheduleGraph } = await import("../src/graph/graph.ts");
 
-const createState = (message: string) => ({
+const createState = (message: string, data?: unknown) => ({
   messages: [new HumanMessage(message)],
   userId: 1,
   condominiumIds: [1],
   amenityId: 1,
   amenityName: "Churrasqueira",
   userName: "Ana Silva",
+  data,
   missingFields: [],
 });
 
@@ -37,6 +38,58 @@ describe("guardrails de prompt injection", () => {
       expect.anything(),
       "guardrailsCheckNode",
     );
+  });
+
+  it("permite a confirmação padrão de uma reserva pendente sem classificá-la como injection", async () => {
+    const state = createState("Sim, pode confirmar a reserva", {
+      userConfirmedSchedule: true,
+      previousData: {
+        intent: "schedule",
+        amenityId: 1,
+        amenityName: "Churrasqueira",
+        userId: 1,
+        scheduleDate: "2026-12-01T18:00:00.000Z",
+        condominiumIdIntent: 1,
+      },
+    });
+
+    const result = await createGuardrailsCheckNode()(state as never);
+
+    expect(result.guardrailsCheck).toEqual({ safe: true });
+    expect(result.scenario).toBe("guardrails_check");
+    expect(openRouterService.generate).not.toHaveBeenCalled();
+  });
+
+  it("permite a resposta padrão de recusa de uma reserva pendente", async () => {
+    const state = createState("Não, quero outra data", {
+      userConfirmedSchedule: false,
+      previousData: {
+        intent: "schedule",
+        amenityId: 1,
+        amenityName: "Churrasqueira",
+        userId: 1,
+        scheduleDate: "2026-12-01T18:00:00.000Z",
+        condominiumIdIntent: 1,
+      },
+    });
+
+    const result = await createGuardrailsCheckNode()(state as never);
+
+    expect(result.guardrailsCheck).toEqual({ safe: true });
+    expect(openRouterService.generate).not.toHaveBeenCalled();
+  });
+
+  it("mantém a classificação para a mesma frase sem contexto de reserva pendente", async () => {
+    openRouterService.generate.mockResolvedValue({
+      content: { isPromptInjection: true },
+    });
+
+    const result = await createGuardrailsCheckNode()(
+      createState("Sim, pode confirmar a reserva") as never,
+    );
+
+    expect(result.guardrailsCheck).toEqual({ safe: false });
+    expect(openRouterService.generate).toHaveBeenCalledTimes(1);
   });
 
   it("bloqueia prompt injection e responde sem chamar os nós seguintes", async () => {

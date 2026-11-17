@@ -52,6 +52,34 @@ describe('rotas de amenities do condomínio', () => {
     })
   })
 
+  it('bloqueia alterações de amenities para moradores', async () => {
+    const headers = authHeaders([{ condominiumId: 1, userId: 1, role: 'morador' }])
+    const createResponse = await app.inject({
+      method: 'POST',
+      url: '/condominium/1/amenities',
+      headers,
+      payload: { name: 'Piscina', minimum_hours: 2, can_schedule: true },
+    })
+    const updateResponse = await app.inject({
+      method: 'PATCH',
+      url: '/condominium/1/amenities/2',
+      headers,
+      payload: { name: 'Academia' },
+    })
+    const deleteResponse = await app.inject({
+      method: 'DELETE',
+      url: '/condominium/1/amenities/2',
+      headers,
+    })
+
+    expect(createResponse.statusCode).toBe(403)
+    expect(updateResponse.statusCode).toBe(403)
+    expect(deleteResponse.statusCode).toBe(403)
+    expect(condominiumServices.createAmenity).not.toHaveBeenCalled()
+    expect(condominiumServices.updateAmenity).not.toHaveBeenCalled()
+    expect(condominiumServices.deleteAmenity).not.toHaveBeenCalled()
+  })
+
   it('rejeita serviço com dados inválidos', async () => {
     const response = await app.inject({
       method: 'POST', url: '/condominium/1/amenities', payload: { name: '', minimum_hours: 0 },

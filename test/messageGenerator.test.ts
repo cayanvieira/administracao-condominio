@@ -22,8 +22,8 @@ const createState = (question = 'Esse condomínio tem churrasqueira?') => ({
   },
 })
 
-const createUnsupportedState = (intent: string | null) => ({
-  ...createState('Pergunta sem suporte'),
+const createUnsupportedState = (intent: string | null, question = 'Pergunta sem suporte') => ({
+  ...createState(question),
   data: { intent },
 })
 
@@ -107,6 +107,31 @@ describe('mensagem do fluxo de consulta', () => {
     expect(result.messages.at(-1)?.text).toBe(
       'Posso ajudar com consultas e reservas do condomínio.',
     )
+    expect(openRouterService.generate).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['Bom dia!', 'Bom dia! Como posso ajudar?'],
+    ['Boa tarde', 'Boa tarde! Como posso ajudar?'],
+    ['Oi, tudo bem?', 'Olá! Como posso ajudar?'],
+  ])('responde à saudação "%s" de forma breve', async (question, expectedResponse) => {
+    const result = await createMessageGeneratorNode()(
+      createUnsupportedState('unknown', question) as never,
+    )
+
+    expect(result.messages.at(-1)?.text).toBe(expectedResponse)
+    expect(openRouterService.generate).not.toHaveBeenCalled()
+  })
+
+  it('não reduz a resposta quando a saudação vem acompanhada de uma solicitação', async () => {
+    openRouterService.generate.mockResolvedValue({
+      content: { content: 'Posso ajudar com as reservas do condomínio.' },
+    })
+
+    await createMessageGeneratorNode()(
+      createUnsupportedState('unknown', 'Bom dia, quero reservar a churrasqueira.') as never,
+    )
+
     expect(openRouterService.generate).toHaveBeenCalledTimes(1)
   })
 
