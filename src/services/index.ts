@@ -9,6 +9,7 @@ import { CondominiumService } from './condominium/index.ts'
 import { UserService } from './user/index.ts'
 import { AccountService } from './account/index.ts'
 import { EmailService } from './email/index.ts'
+import { AnnouncementsService } from './announcements/index.ts'
 
 class Service {
 
@@ -20,6 +21,7 @@ class Service {
   #Email?: EmailService
   #CondominiumAmenities?: CondominiumAmenitiesService
   #Condominium?: CondominiumService
+  #Announcements?: AnnouncementsService
 
   get OpenRouter(): OpenRouterService {
     return this.#OpenRouter ??= new OpenRouterService()
@@ -51,6 +53,10 @@ class Service {
 
   get Condominium(): CondominiumService {
     return this.#Condominium ??= new CondominiumService(database)
+  }
+
+  get Announcements(): AnnouncementsService {
+    return this.#Announcements ??= new AnnouncementsService(database)
   }
 }
 

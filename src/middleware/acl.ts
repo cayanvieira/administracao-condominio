@@ -41,6 +41,11 @@ export const ACL = {
     updateSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
     deleteSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ['admin'] },
   },
+  announcements: {
+    list: { url: '/announcements', type: 'private', roles: ALL_ROLES },
+    create: { url: '/announcements', type: 'private', roles: ['sindico', 'funcionario'] },
+    deactivate: { url: '/announcements/:announcementId/deactivate', type: 'private', roles: ['sindico', 'funcionario'] },
+  },
 } as const
 
 export const acl = (route: AclRoute): preHandlerHookHandler => async (request, reply) => {
@@ -54,7 +59,8 @@ export const acl = (route: AclRoute): preHandlerHookHandler => async (request, r
     condominiumIds?: number[]
     userId?: number
   } | undefined
-  const rawCondominiumId = params?.condominiumId ?? body?.condominiumId
+  const query = request.query as { condominiumId?: string | number } | undefined
+  const rawCondominiumId = params?.condominiumId ?? body?.condominiumId ?? query?.condominiumId
   const condominiumId = rawCondominiumId === undefined ? undefined : Number(rawCondominiumId)
 
   if (condominiumId !== undefined && (!Number.isInteger(condominiumId) || condominiumId < 1)) {

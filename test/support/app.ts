@@ -48,6 +48,12 @@ export const scheduleGraph = {
   handleQuestion: jest.fn<(...args: any[]) => any>(),
 }
 
+export const announcementsService = {
+  findByCondominiumId: jest.fn<(...args: any[]) => any>(),
+  create: jest.fn<(...args: any[]) => any>(),
+  deactivate: jest.fn<(...args: any[]) => any>(),
+}
+
 jest.unstable_mockModule('../../src/services/index.ts', () => ({
   default: class MockServices {
     get Account() { return accountService }
@@ -57,6 +63,7 @@ jest.unstable_mockModule('../../src/services/index.ts', () => ({
     get Schedule() { return scheduleService }
     get OpenRouter() { return openRouterService }
     get ScheduleGraph() { return scheduleGraph }
+    get Announcements() { return announcementsService }
   },
 }))
 
@@ -99,6 +106,22 @@ export function resetMocks() {
   scheduleService.findActiveSchedulesByAmenityBetweenDates.mockResolvedValue([])
   openRouterService.generate.mockResolvedValue({ content: { content: 'Resposta de teste.' } })
   scheduleGraph.handleQuestion.mockResolvedValue({ scenario: 'ok' })
+  announcementsService.findByCondominiumId.mockResolvedValue([])
+  announcementsService.create.mockResolvedValue({
+    id: 1,
+    condominiumId: 1,
+    title: 'Manutenção',
+    message: 'A área ficará fechada.',
+    createDate: '2026-11-20T12:00:00.000Z',
+    expirationDate: null,
+    theme: null,
+    important: false,
+    active: true,
+    createByUserId: 1,
+    role: 'sindico',
+    authorName: 'Ana Silva',
+  })
+  announcementsService.deactivate.mockResolvedValue(true)
 }
 
 export function authHeaders(condominiums = [
