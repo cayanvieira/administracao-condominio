@@ -30,13 +30,35 @@ const condominiumUpdate = z.object({
 const userInput = z.object({
   userId: z.number().int().positive(),
   role: z.enum(['sindico', 'morador', 'funcionario']),
+  unit: z.string().trim().min(1).max(50).nullable().optional(),
 })
-const amenityInput = z.object({
+const timeInput = z.string().regex(/^(?:[01]\d|2[0-3]):00$/)
+const amenityFields = z.object({
   name: z.string().trim().min(1).max(150),
-  minimum_hours: z.number().int().positive(),
-  can_schedule: z.boolean().default(true),
+  reservation_hours: z.number().int().positive(),
+  available_from: timeInput,
+  available_until: timeInput,
+  can_schedule: z.boolean(),
 })
-const amenityUpdate = amenityInput.partial()
+const amenityInput = amenityFields.extend({
+  available_from: timeInput.default('00:00'),
+  available_until: timeInput.default('23:00'),
+  can_schedule: z.boolean().default(true),
+}).refine(
+  (amenity) => toMinutes(amenity.available_from) < toMinutes(amenity.available_until),
+  { message: 'O horário final deve ser posterior ao horário inicial', path: ['available_until'] },
+)
+const amenityUpdate = amenityFields.partial()
+
+const amenityAvailabilityQuery = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  timezoneOffsetMinutes: z.coerce.number().int().min(-840).max(840).default(0),
+})
+
+const toMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
 
 const sendError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof CondominiumServiceError) {
@@ -118,11 +140,11 @@ const Routers = (server: FastifyInstance) => {
     if (!parsedId.success || !parsedBody.success) return reply.code(400).send({ message: 'Dados do vinculo invalidos' })
 
     try {
-      return reply.code(201).send(await Service.Condominium.addUser(
-        parsedId.data.condominiumId,
-        parsedBody.data.userId,
-        parsedBody.data.role,
-      ))
+      const { userId, role, unit } = parsedBody.data
+      const linkedUser = unit === undefined
+        ? await Service.Condominium.addUser(parsedId.data.condominiumId, userId, role)
+        : await Service.Condominium.addUser(parsedId.data.condominiumId, userId, role, unit)
+      return reply.code(201).send(linkedUser)
     } catch (error) {
       return sendError(reply, error)
     }
@@ -169,6 +191,44 @@ const Routers = (server: FastifyInstance) => {
     }
   })
 
+  server.get('/:condominiumId/amenities/:amenityId/availability', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.findAmenity)] }, async (request, reply) => {
+    const parsedParams = z.object({
+      condominiumId: z.coerce.number().int().positive(),
+      amenityId: z.coerce.number().int().positive(),
+    }).safeParse(request.params)
+    const parsedQuery = amenityAvailabilityQuery.safeParse(request.query)
+    if (!parsedParams.success || !parsedQuery.success) {
+      return reply.code(400).send({ message: 'Data ou ids invalidos' })
+    }
+
+    const { condominiumId, amenityId } = parsedParams.data
+    const { date, timezoneOffsetMinutes } = parsedQuery.data
+    const [year, month, day] = date.split('-').map(Number)
+    const parsedDate = new Date(Date.UTC(year, month - 1, day))
+    if (parsedDate.toISOString().slice(0, 10) !== date) {
+      return reply.code(400).send({ message: 'Data invalida' })
+    }
+
+    try {
+      await Service.Condominium.findById(condominiumId)
+      const amenity = await Service.CondominiumAmenities.findAmenityById(amenityId, condominiumId)
+      if (!amenity) return reply.code(404).send({ message: 'Servico nao encontrado' })
+      if (!amenity.can_schedule) return reply.code(422).send({ message: 'Este servico nao aceita reservas' })
+      if (toMinutes(amenity.available_until) <= toMinutes(amenity.available_from)) {
+        return reply.code(422).send({ message: 'Horario de disponibilidade invalido' })
+      }
+
+      const availableSlots = await Service.Schedule.findAvailableSlots(
+        amenity,
+        date,
+        timezoneOffsetMinutes,
+      )
+      return reply.send({ date, availableSlots })
+    } catch (error) {
+      return sendError(reply, error)
+    }
+  })
+
   server.post('/:condominiumId/amenities', { onRequest: [authenticate], preHandler: [acl(ACL.condominium.createAmenity)] }, async (request, reply) => {
     const parsedId = condominiumIdParam.safeParse(request.params)
     const parsedBody = amenityInput.safeParse(request.body)
@@ -192,6 +252,16 @@ const Routers = (server: FastifyInstance) => {
 
     try {
       await Service.Condominium.findById(parsed.data.condominiumId)
+      const currentAmenity = await Service.CondominiumAmenities.findAmenityById(
+        parsed.data.amenityId,
+        parsed.data.condominiumId,
+      )
+      if (!currentAmenity) return reply.code(404).send({ message: 'Amenity nao encontrado' })
+      const availableFrom = parsedBody.data.available_from ?? currentAmenity.available_from
+      const availableUntil = parsedBody.data.available_until ?? currentAmenity.available_until
+      if (toMinutes(availableFrom) >= toMinutes(availableUntil)) {
+        return reply.code(400).send({ message: 'O horário final deve ser posterior ao horário inicial' })
+      }
       const amenity = await Service.CondominiumAmenities.updateAmenity(parsed.data.amenityId, parsed.data.condominiumId, parsedBody.data)
       if (!amenity) return reply.code(404).send({ message: 'Amenity nao encontrado' })
       return reply.send(amenity)

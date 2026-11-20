@@ -51,8 +51,14 @@ describe('rotas de condomínios', () => {
   })
 
   it('lista usuários do condomínio', async () => {
+    condominiumService.findUsers.mockReset().mockResolvedValue([
+      { id: 1, condominium_id: 1, user_id: 2, name: 'Morador', document: '123', email: null, role: 'morador', unit: '1206A' },
+    ])
     const response = await app.inject({ method: 'GET', url: '/condominium/1/users', headers: authHeaders() })
     expect(response.statusCode).toBe(200)
+    expect(response.json()).toEqual([
+      { id: 1, condominium_id: 1, user_id: 2, name: 'Morador', document: '123', email: null, role: 'morador', unit: '1206A' },
+    ])
   })
 
   it('vincula usuário ao condomínio', async () => {
@@ -62,6 +68,18 @@ describe('rotas de condomínios', () => {
     })
     expect(response.statusCode).toBe(201)
     expect(condominiumService.addUser).toHaveBeenCalledWith(1, 2, 'sindico')
+  })
+
+  it('aceita a unidade ao vincular usuário ao condomínio', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/condominium/1/users',
+      headers: authHeaders(),
+      payload: { userId: 2, role: 'morador', unit: '1206A' },
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(condominiumService.addUser).toHaveBeenCalledWith(1, 2, 'morador', '1206A')
   })
 
   it('permite adicionar morador somente para usuário sindico autenticado pelo login', async () => {

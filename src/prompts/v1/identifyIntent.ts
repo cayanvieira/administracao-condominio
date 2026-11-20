@@ -25,6 +25,7 @@ export const getSystemPrompt = (
   user: User,
   condominiumIds: number[],
   condominiums: Array<{ id: number; name: string }>,
+  timezoneOffsetMinutes = 0,
 ) => {
   return JSON.stringify({
     role: 'Intent Classifier for Condominium Management',
@@ -33,15 +34,17 @@ export const getSystemPrompt = (
       id: amenity.id,
       name: amenity.name,
       can_schedule: amenity.can_schedule,
-      minimum_hours: amenity.minimum_hours,
+      reservation_hours: amenity.reservation_hours,
     })),
     users: user,
     condominiumIds: condominiumIds,
     condominiums,
-    current_date: new Date().toISOString(),
+    current_date: new Date(Date.now() - timezoneOffsetMinutes * 60_000).toISOString().slice(0, 10),
+    timezoneOffsetMinutes,
     important:[
       "if condominiumIds is more than one, do not assume a condominium. Ask the user to choose one before checking dates or scheduling. Use condominiumIdIntent only when the user selected one from the provided condominiums list.",
       "Return only a valid JSON object. Include every field from the schema in the response. Use the exact key names: intent, amenityId, amenityName, userId, userName, scheduleDate, newScheduleDate, consultationStartDate, consultationEndDate, consultationDateTime, reason, document, condominiumIdIntent, condominiumName. If the information is not present in the question, set the value to null instead of omitting the key. Do not include extra fields or explanations. NEVER swap scheduleDate and newScheduleDate.",
+      "Interpret dates and times as the user's local wall-clock time. Do not convert them to UTC. The application will apply timezoneOffsetMinutes. New reservation start times must have minutes exactly 00; for modify, apply this rule to newScheduleDate. Existing reservation times used for cancel or lookup may retain their original minutes.",
     ],
     rules: {
       schedule: {
@@ -71,12 +74,12 @@ export const getSystemPrompt = (
         ]
       },
       consult: {
-        description: 'User asks for facts, minimum reservation duration, or availability of amenities in the selected condominium. A question about how many hours an amenity must be rented is consultation, not a request to schedule.',
+        description: 'User asks for facts, the configured reservation duration, or availability of amenities in the selected condominium. A question about how many hours an amenity reservation lasts is consultation, not a request to schedule.',
         examples: [
           'Does this condominium have a barbecue area?',
           'Is the pool available on May 25?',
           'Which days this week is the party room available?',
-          'How many hours is the minimum reservation for the barbecue area?',
+          'How many hours does the barbecue area reservation last?',
           'Quanto tempo é a reserva da churrasqueira?',
           'Por quantas horas preciso alugar o salão de festas?',
         ]
@@ -87,13 +90,13 @@ export const getSystemPrompt = (
       userName: 'Extract the user name if mentioned; otherwise keep the same as the current user name when available.',
       amenityId: 'If the user mentions an amenity or area name, match it to the nearest amenity in the amenities list and return its id. If not found, set null.',
       amenityName: 'Extract the amenity or area name as mentioned by the user. If not present, set null.',
-      scheduleDate: 'For schedule, parse the requested date and time. For cancel or modify, parse the date and time of the EXISTING reservation being located. Convert to ISO format.',
-      newScheduleDate: 'Only for modify, parse the NEW date and time requested by the user. For schedule and cancel, always return null.',
+      scheduleDate: 'For schedule, parse the requested local date and time. For cancel or modify, parse the local date and time of the EXISTING reservation being located. Keep the local wall-clock components and do not convert to UTC.',
+      newScheduleDate: 'Only for modify, parse the NEW local date and time requested by the user. Minutes must be 00. For schedule and cancel, always return null.',
       consultationStartDate: 'For an availability consultation, extract the first requested calendar date as YYYY-MM-DD. Resolve dates without a year to the next occurrence on or after current_date. For a date range, use its first day. Otherwise return null.',
       consultationEndDate: 'For an availability consultation, extract the inclusive final calendar date as YYYY-MM-DD. For one specific date, use the same date as consultationStartDate. For a week request, use the full requested calendar week. Otherwise return null.',
-      consultationDateTime: 'For an availability consultation about a specific time, return the requested date and time as ISO 8601 with timezone information. If only a date or a date range is requested, return null.',
-      intent: 'Classify questions asking minimum hours, rental duration, or reservation length as consult. They are informational questions, not schedule requests.',
-      unsupported_requests: 'Only classify as consult questions about recorded condominium amenities, their minimum reservation duration, or availability. Questions asking for the name or personal details of the syndic/manager/residents, or other facts absent from the condominium amenity and reservation data, must be classified as unknown.',
+      consultationDateTime: 'For an availability consultation about a specific time, return the requested local date and time without converting it to UTC. Minutes must be 00. If only a date or a date range is requested, return null.',
+      intent: 'Classify questions asking the configured reservation duration or reservation length as consult. They are informational questions, not schedule requests.',
+      unsupported_requests: 'Only classify as consult questions about recorded condominium amenities, their configured reservation duration, or availability. Questions asking for the name or personal details of the syndic/manager/residents, or other facts absent from the condominium amenity and reservation data, must be classified as unknown.',
       date_mapping: 'For modify: scheduleDate = old/current reservation; newScheduleDate = new/target reservation. Never reverse these values.',
       document: 'Extract the user document number from the question or context. If not present, set null.',
       reason: 'Extract the reason/purpose for the action when relevant; otherwise set null.',
@@ -110,7 +113,7 @@ export const getSystemPrompt = (
           amenityName: 'Salão de festas',
           userName: 'João da Silva',
           userId: 10,
-          scheduleDate: '2026-09-05T19:00:00.000Z',
+          scheduleDate: '2026-09-05T19:00:00',
           consultationStartDate: null,
           consultationEndDate: null,
           consultationDateTime: null,

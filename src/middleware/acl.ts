@@ -33,13 +33,18 @@ export const ACL = {
     removeUser: { url: '/condominium/:condominiumId/users/:userId/:role', type: 'private', roles: ["sindico"] },
     listAmenities: { url: '/condominium/:condominiumId/amenities', type: 'private', roles: ALL_ROLES },
     findAmenity: { url: '/condominium/:condominiumId/amenities/:amenityId', type: 'private', roles: ALL_ROLES },
-    createAmenity: { url: '/condominium/:condominiumId/amenities', type: 'private', roles: ALL_ROLES },
-    updateAmenity: { url: '/condominium/:condominiumId/amenities/:amenityId', type: 'private', roles: ALL_ROLES },
-    removeAmenity: { url: '/condominium/:condominiumId/amenities/:amenityId', type: 'private', roles: ALL_ROLES },
+    createAmenity: { url: '/condominium/:condominiumId/amenities', type: 'private', roles: ['sindico'] },
+    updateAmenity: { url: '/condominium/:condominiumId/amenities/:amenityId', type: 'private', roles: ['sindico'] },
+    removeAmenity: { url: '/condominium/:condominiumId/amenities/:amenityId', type: 'private', roles: ['sindico'] },
     listSchedules: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ALL_ROLES },
     createSchedule: { url: '/condominium/:condominiumId/schedules', type: 'private', roles: ['morador', 'sindico'] },
     updateSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ALL_ROLES },
     deleteSchedule: { url: '/condominium/:condominiumId/schedules/:scheduleId', type: 'private', roles: ['admin'] },
+  },
+  announcements: {
+    list: { url: '/announcements', type: 'private', roles: ALL_ROLES },
+    create: { url: '/announcements', type: 'private', roles: ['sindico', 'funcionario'] },
+    deactivate: { url: '/announcements/:announcementId/deactivate', type: 'private', roles: ['sindico', 'funcionario'] },
   },
 } as const
 
@@ -54,7 +59,8 @@ export const acl = (route: AclRoute): preHandlerHookHandler => async (request, r
     condominiumIds?: number[]
     userId?: number
   } | undefined
-  const rawCondominiumId = params?.condominiumId ?? body?.condominiumId
+  const query = request.query as { condominiumId?: string | number } | undefined
+  const rawCondominiumId = params?.condominiumId ?? body?.condominiumId ?? query?.condominiumId
   const condominiumId = rawCondominiumId === undefined ? undefined : Number(rawCondominiumId)
 
   if (condominiumId !== undefined && (!Number.isInteger(condominiumId) || condominiumId < 1)) {

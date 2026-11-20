@@ -1,5 +1,10 @@
 import type { GraphState } from "../state.ts";
 import Services from "../../services/index.ts";
+import {
+  formatLocalDateTime,
+  getLocalDateString,
+  parseLocalDateTime,
+} from "../../services/schedule/index.ts";
 
 const MAX_CONSULTATION_DAYS = 31;
 
@@ -74,22 +79,22 @@ export function createConsultationNode() {
             .map((name) => name.replace(/\b(e|and|ou|or)\b/gi, "").replace(/[,&]/g, " ").trim())
             .filter(Boolean)
         : [];
-      const requestedDateTime = typeof data.consultationDateTime === "string"
-        ? new Date(data.consultationDateTime)
-        : undefined;
-      const validRequestedDateTime = requestedDateTime && !Number.isNaN(requestedDateTime.getTime())
-        ? requestedDateTime
+      const timezoneOffsetMinutes = state.timezoneOffsetMinutes ?? 0;
+      const validRequestedDateTime = typeof data.consultationDateTime === "string"
+        ? parseLocalDateTime(data.consultationDateTime, timezoneOffsetMinutes)
         : undefined;
       const consultationStart = parseCalendarDate(data.consultationStartDate)
         ?? (validRequestedDateTime
-          ? new Date(`${formatCalendarDate(validRequestedDateTime)}T00:00:00.000Z`)
+          ? parseCalendarDate(getLocalDateString(validRequestedDateTime, timezoneOffsetMinutes))
           : undefined);
       const consultationEnd = parseCalendarDate(data.consultationEndDate)
         ?? consultationStart;
       const hasAvailabilityQuestion = /\b(dispon[ií]vel|vaga|livre|reservad[oa]s?|available|availability|free)\b/i.test(question);
       const availability = {
         requested: hasAvailabilityQuestion,
-        requestedDateTime: validRequestedDateTime?.toISOString() ?? null,
+        requestedDateTime: validRequestedDateTime
+          ? formatLocalDateTime(validRequestedDateTime, timezoneOffsetMinutes)
+          : null,
         status: "unknown" as "unknown" | "available" | "unavailable" | "partially_available" | "cannot_schedule",
         isAvailable: null as boolean | null,
         requestedStartDate: consultationStart ? formatCalendarDate(consultationStart) : null,
@@ -116,44 +121,31 @@ export function createConsultationNode() {
           if (numberOfDays > MAX_CONSULTATION_DAYS) {
             availability.rangeTooLarge = true;
           } else {
-            const slotEnd = validRequestedDateTime
-              ? new Date(validRequestedDateTime.getTime() + amenity.minimum_hours * 60 * 60 * 1000)
-              : undefined;
-            const consultationEndExclusive = addUtcDays(consultationEnd, 1);
-            const reservations = await Service.Schedule.findActiveSchedulesByAmenityBetweenDates(
-              amenity.id,
-              validRequestedDateTime
-                ? new Date(validRequestedDateTime.getTime() - amenity.minimum_hours * 60 * 60 * 1000)
-                : consultationStart,
-              slotEnd && slotEnd > consultationEndExclusive ? slotEnd : consultationEndExclusive,
+            const requestedDates = Array.from({ length: numberOfDays }, (_, index) =>
+              formatCalendarDate(addUtcDays(consultationStart, index)),
+            );
+            const dailyAvailability = await Service.Schedule.findAvailableSlotsForDateRange(
+              amenity,
+              requestedDates,
+              timezoneOffsetMinutes,
             );
             if (validRequestedDateTime) {
-              const requestedSlotEnd = slotEnd;
-              const conflictsWithRequestedSlot = reservations.some((reservation) => {
-                const reservationStart = new Date(reservation.reservation_date);
-                const reservationEnd = new Date(
-                  reservationStart.getTime() + amenity.minimum_hours * 60 * 60 * 1000,
-                );
-                return requestedSlotEnd !== undefined
-                  && reservationStart < requestedSlotEnd
-                  && reservationEnd > validRequestedDateTime;
-              });
-              availability.isAvailable = !conflictsWithRequestedSlot;
-              availability.status = conflictsWithRequestedSlot ? "unavailable" : "available";
+              const requestedDate = getLocalDateString(validRequestedDateTime, timezoneOffsetMinutes);
+              const requestedDay = dailyAvailability.find((day) => day.date === requestedDate);
+              availability.isAvailable = requestedDay?.availableSlots.some((slot) => (
+                slot.reservation_date.getTime() === validRequestedDateTime.getTime()
+              )) ?? false;
+              availability.status = availability.isAvailable ? "available" : "unavailable";
             }
-            const bookedDates = new Set(
-              reservations
-                .map((reservation) => formatCalendarDate(new Date(reservation.reservation_date)))
-                .filter((date) => date >= formatCalendarDate(consultationStart)
-                  && date <= formatCalendarDate(consultationEnd)),
-            );
-
-            availability.bookedDates = [...bookedDates].sort();
+            const availableDates = dailyAvailability
+              .filter((day) => day.availableSlots.length > 0)
+              .map((day) => day.date);
+            availability.bookedDates = requestedDates.filter((date) => !availableDates.includes(date));
             availability.availableDates = Array.from({ length: numberOfDays }, (_, index) =>
               formatCalendarDate(addUtcDays(consultationStart, index)),
-            ).filter((date) => !bookedDates.has(date));
+            ).filter((date) => availableDates.includes(date));
             if (!validRequestedDateTime && numberOfDays === 1) {
-              availability.isAvailable = !bookedDates.has(formatCalendarDate(consultationStart));
+              availability.isAvailable = availableDates.includes(formatCalendarDate(consultationStart));
               availability.status = availability.isAvailable ? "available" : "unavailable";
             } else if (!validRequestedDateTime && numberOfDays > 1) {
               availability.status = availability.availableDates.length === numberOfDays
@@ -172,23 +164,23 @@ export function createConsultationNode() {
         details: {
           question,
           condominiumName: condominium?.name ?? null,
-          amenities: amenities.map(({ name, can_schedule, minimum_hours }) => ({
+          amenities: amenities.map(({ name, can_schedule, reservation_hours }) => ({
             name,
             canSchedule: can_schedule,
-            minimumHours: minimum_hours,
+            reservationHours: reservation_hours,
           })),
           requestedAmenityName: requestedAmenityName || null,
           requestedAmenities: requestedAmenities.map((item) => ({
             name: item.name,
             canSchedule: item.can_schedule,
-            minimumHours: item.minimum_hours,
+            reservationHours: item.reservation_hours,
           })),
           unrecognizedAmenityNames,
           amenity: amenity
             ? {
                 name: amenity.name,
                 canSchedule: amenity.can_schedule,
-                minimumHours: amenity.minimum_hours,
+                reservationHours: amenity.reservation_hours,
               }
             : null,
           availability,

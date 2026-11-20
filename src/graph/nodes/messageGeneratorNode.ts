@@ -20,9 +20,35 @@ const fieldLabels: Record<string, string> = {
   userName: 'o seu nome',
   scheduleDate: 'a data e o horário',
   newScheduleDate: 'a nova data e o novo horário da reserva',
+  consultationDateTime: 'um horário terminado em :00',
   reason: 'o motivo',
   userId: 'o seu identificador',
   intent: 'a intenção',
+};
+
+const getGreetingResponse = (message: string): string | undefined => {
+  const normalizedMessage = message
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[.,!?;:]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const responses: Record<string, string> = {
+    "bom dia": "Bom dia! Como posso ajudar?",
+    "bom dia tudo bem": "Bom dia! Como posso ajudar?",
+    "boa tarde": "Boa tarde! Como posso ajudar?",
+    "boa tarde tudo bem": "Boa tarde! Como posso ajudar?",
+    "boa noite": "Boa noite! Como posso ajudar?",
+    "boa noite tudo bem": "Boa noite! Como posso ajudar?",
+    "oi": "Olá! Como posso ajudar?",
+    "oi tudo bem": "Olá! Como posso ajudar?",
+    "ola": "Olá! Como posso ajudar?",
+    "ola tudo bem": "Olá! Como posso ajudar?",
+  };
+
+  return responses[normalizedMessage];
 };
 
 const isDurationQuestion = (question: string): boolean => {
@@ -30,7 +56,7 @@ const isDurationQuestion = (question: string): boolean => {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase();
-  return /\b(quanto tempo|quantas horas|duracao|tempo minimo|minimo de horas|horas minimas|tempo de reserva|periodo de reserva|tempo para alugar|tempo para reservar|devo alugar por)\b/.test(normalizedQuestion);
+  return /\b(quanto tempo|quantas horas|quantidade de horas|horas da reserva|duracao|tempo de reserva|periodo de reserva|tempo para alugar|tempo para reservar|devo alugar por)\b/.test(normalizedQuestion);
 };
 
 const getConsultationFallback = (state: GraphState): string | undefined => {
@@ -39,11 +65,11 @@ const getConsultationFallback = (state: GraphState): string | undefined => {
   }
 
   const amenity = state.details?.amenity;
-  if (typeof amenity?.name !== "string" || typeof amenity.minimumHours !== "number") {
+  if (typeof amenity?.name !== "string" || typeof amenity.reservationHours !== "number") {
     return undefined;
   }
 
-  return `A reserva da ${amenity.name} tem duração mínima de ${amenity.minimumHours} horas.`;
+  return `A reserva da ${amenity.name} tem duração de ${amenity.reservationHours} horas.`;
 };
 
 const getFallbackMessage = (state: GraphState): string =>
@@ -54,6 +80,14 @@ const getFallbackMessage = (state: GraphState): string =>
 
 export function createMessageGeneratorNode() {
   return async (state: GraphState): Promise<GraphState> => {
+    const greetingResponse = getGreetingResponse(state.messages.at(-1)?.text ?? "");
+    if (greetingResponse) {
+      return {
+        ...state,
+        messages: [...state.messages, new AIMessage(greetingResponse)],
+      };
+    }
+
     const Service = new Services();
 
     try {

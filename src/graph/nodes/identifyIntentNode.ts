@@ -1,5 +1,6 @@
 import type { GraphState }  from "../state.ts";
 import Services from "../../services/index.ts";
+import { parseLocalDateTime } from "../../services/schedule/index.ts";
 import { getSystemPrompt, getUserPromptTemplate, IntentSchema } from "../../prompts/v1/identifyIntent.ts";
 
 const normalizeText = (value: string): string =>
@@ -13,8 +14,8 @@ const isAmenityDurationQuestion = (question: string): boolean => {
 function normalizeIntentResponse(
   payload: Record<string, unknown>,
   state: GraphState,
-  amenities: Array<{ id: number; name: string }>
-  , condominiums: Array<{ id: number; name: string }>
+  amenities: Array<{ id: number; name: string }>,
+  condominiums: Array<{ id: number; name: string }>,
 ) {
   const rawAmenityName =
     typeof payload.amenityName === "string" ? payload.amenityName.trim() : "";
@@ -88,7 +89,7 @@ function normalizeIntentResponse(
   return normalized;
 }
 
-function validateIntentData(data: any) {
+function validateIntentData(data: any, timezoneOffsetMinutes: number) {
 
   const intent = data.intent
   const missingFields: string[] = [];
@@ -118,6 +119,13 @@ function validateIntentData(data: any) {
       if (!data.scheduleDate) {
         missingFields.push("scheduleDate");
         invalidFields.push("scheduleDate");
+      } else if (!parseLocalDateTime(
+        data.scheduleDate,
+        timezoneOffsetMinutes,
+        intent === "schedule",
+      )) {
+        missingFields.push("scheduleDate");
+        invalidFields.push("scheduleDate");
       }
       if(
         !data.condominiumIdIntent || !data.condominiumName
@@ -126,9 +134,15 @@ function validateIntentData(data: any) {
         invalidFields.push("condominiumIdIntent");
       }
 
-      if (intent === "modify" && !data.newScheduleDate) {
-        missingFields.push("newScheduleDate");
-        invalidFields.push("newScheduleDate");
+      if (intent === "modify") {
+        if (!data.newScheduleDate || !parseLocalDateTime(
+          data.newScheduleDate,
+          timezoneOffsetMinutes,
+          true,
+        )) {
+          missingFields.push("newScheduleDate");
+          invalidFields.push("newScheduleDate");
+        }
       }
       break;
     }
@@ -136,6 +150,13 @@ function validateIntentData(data: any) {
       if (!data.condominiumIdIntent || !data.condominiumName) {
         missingFields.push("condominiumIdIntent");
         invalidFields.push("condominiumIdIntent");
+      }
+      if (
+        data.consultationDateTime
+        && !parseLocalDateTime(data.consultationDateTime, timezoneOffsetMinutes, true)
+      ) {
+        missingFields.push("consultationDateTime");
+        invalidFields.push("consultationDateTime");
       }
       break;
     }
@@ -174,7 +195,14 @@ export function createIdentifyIntentNode() {
     const condominiums = await Promise.all(condominiumIds.map(async (id:number) => Service.Condominium.findById(id)))
     const amenities = await Service.CondominiumAmenities.findAllAmenitiesByCondominiumIds(condominiumIds);
     const userId = await Service.User.findUserById(state.userId)
-    const systemPrompt = getSystemPrompt(amenities, userId, condominiumIds, condominiums);
+    const timezoneOffsetMinutes = state.timezoneOffsetMinutes ?? 0;
+    const systemPrompt = getSystemPrompt(
+      amenities,
+      userId,
+      condominiumIds,
+      condominiums,
+      timezoneOffsetMinutes,
+    );
     const userPrompt = getUserPromptTemplate(input, previousData);
   
     const data = await Service.OpenRouter.generate(
@@ -229,7 +257,7 @@ export function createIdentifyIntentNode() {
         ? state.data.userConfirmedSchedule
         : undefined;
 
-      const { missingFields, invalidFields } = validateIntentData(normalized);
+      const { missingFields, invalidFields } = validateIntentData(normalized, timezoneOffsetMinutes);
 
       return {
         ...state,

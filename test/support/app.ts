@@ -33,7 +33,13 @@ export const condominiumServices = {
 }
 
 export const scheduleService = {
+  findConflictingSchedules: jest.fn<(...args: any[]) => any>(),
+  createScheduleIfAvailable: jest.fn<(...args: any[]) => any>(),
+  findScheduleById: jest.fn<(...args: any[]) => any>(),
+  updateScheduleIfAvailable: jest.fn<(...args: any[]) => any>(),
   findActiveSchedulesByAmenityBetweenDates: jest.fn<(...args: any[]) => any>(),
+  findAvailableSlots: jest.fn<(...args: any[]) => any>(),
+  findAvailableSlotsForDateRange: jest.fn<(...args: any[]) => any>(),
 }
 
 export const openRouterService = {
@@ -42,6 +48,12 @@ export const openRouterService = {
 
 export const scheduleGraph = {
   handleQuestion: jest.fn<(...args: any[]) => any>(),
+}
+
+export const announcementsService = {
+  findByCondominiumId: jest.fn<(...args: any[]) => any>(),
+  create: jest.fn<(...args: any[]) => any>(),
+  deactivate: jest.fn<(...args: any[]) => any>(),
 }
 
 jest.unstable_mockModule('../../src/services/index.ts', () => ({
@@ -53,6 +65,7 @@ jest.unstable_mockModule('../../src/services/index.ts', () => ({
     get Schedule() { return scheduleService }
     get OpenRouter() { return openRouterService }
     get ScheduleGraph() { return scheduleGraph }
+    get Announcements() { return announcementsService }
   },
 }))
 
@@ -77,14 +90,82 @@ export function resetMocks() {
   userService.findUserById.mockResolvedValue({ id: 1, name: 'Ana Silva' })
   condominiumService.addUser.mockResolvedValue({ user_id: 1, role: 'morador' })
   condominiumService.removeUser.mockResolvedValue(undefined)
-  condominiumServices.findAllAmenitiesByCondominiumIds.mockResolvedValue([{ id: 1, condominium_id: 1, name: 'Piscina' }])
-  condominiumServices.findAmenityById.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
-  condominiumServices.createAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina' })
-  condominiumServices.updateAmenity.mockResolvedValue({ id: 1, condominium_id: 1, name: 'Piscina Nova' })
+  condominiumServices.findAllAmenitiesByCondominiumIds.mockResolvedValue([{
+    id: 1,
+    condominium_id: 1,
+    name: 'Piscina',
+    reservation_hours: 2,
+    available_from: '08:00:00',
+    available_until: '22:00:00',
+    can_schedule: true,
+  }])
+  condominiumServices.findAmenityById.mockResolvedValue({
+    id: 1,
+    condominium_id: 1,
+    name: 'Piscina',
+    reservation_hours: 2,
+    available_from: '08:00:00',
+    available_until: '22:00:00',
+    can_schedule: true,
+  })
+  condominiumServices.createAmenity.mockResolvedValue({
+    id: 1,
+    condominium_id: 1,
+    name: 'Piscina',
+    reservation_hours: 2,
+    available_from: '00:00:00',
+    available_until: '23:00:00',
+    can_schedule: true,
+  })
+  condominiumServices.updateAmenity.mockResolvedValue({
+    id: 1,
+    condominium_id: 1,
+    name: 'Piscina Nova',
+    reservation_hours: 2,
+    available_from: '08:00:00',
+    available_until: '22:00:00',
+    can_schedule: true,
+  })
   condominiumServices.deleteAmenity.mockResolvedValue(true)
+  scheduleService.findConflictingSchedules.mockResolvedValue([])
+  scheduleService.createScheduleIfAvailable.mockResolvedValue({
+    status: 'saved',
+    schedule: {
+      id: 1,
+      user_id: 1,
+      createdByUserId: 1,
+      editByUserId: null,
+      amenity_id: 1,
+      reservation_date: new Date('2026-11-18T18:00:00.000Z'),
+      reservation_end: new Date('2026-11-18T20:00:00.000Z'),
+    },
+  })
+  scheduleService.findScheduleById.mockResolvedValue({ id: 1, user_id: 1, amenity_id: 1 })
+  scheduleService.updateScheduleIfAvailable.mockResolvedValue({
+    status: 'saved',
+    schedule: { id: 1, user_id: 1, amenity_id: 1 },
+  })
   scheduleService.findActiveSchedulesByAmenityBetweenDates.mockResolvedValue([])
+  scheduleService.findAvailableSlots.mockResolvedValue([])
+  scheduleService.findAvailableSlotsForDateRange.mockResolvedValue([])
   openRouterService.generate.mockResolvedValue({ content: { content: 'Resposta de teste.' } })
   scheduleGraph.handleQuestion.mockResolvedValue({ scenario: 'ok' })
+  announcementsService.findByCondominiumId.mockResolvedValue([])
+  announcementsService.create.mockResolvedValue({
+    id: 1,
+    condominiumId: 1,
+    title: 'Manutenção',
+    message: 'A área ficará fechada.',
+    createDate: '2026-11-20T12:00:00.000Z',
+    expirationDate: null,
+    theme: null,
+    important: false,
+    active: true,
+    createByUserId: 1,
+    role: 'sindico',
+    authorName: 'Ana Silva',
+  })
+  announcementsService.deactivate.mockResolvedValue(true)
 }
 
 export function authHeaders(condominiums = [
