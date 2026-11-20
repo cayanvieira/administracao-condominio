@@ -71,15 +71,15 @@ describe('mensagem do fluxo de consulta', () => {
     }
   })
 
-  it('responde a duração mínima a partir do dado do condomínio se a LLM falhar', async () => {
+  it('responde à duração fixa a partir do dado do condomínio se a LLM falhar', async () => {
     openRouterService.generate.mockRejectedValue(new Error('Invalid structured response'))
     const state = createState('Quanto tempo é a reserva da churrasqueira?')
-    state.details.amenity = { name: 'Churrasqueira', minimumHours: 3 }
+    state.details.amenity = { name: 'Churrasqueira', reservationHours: 3 }
 
     const result = await createMessageGeneratorNode()(state as never)
 
     expect(result.messages.at(-1)?.text).toBe(
-      'A reserva da Churrasqueira tem duração mínima de 3 horas.',
+      'A reserva da Churrasqueira tem duração de 3 horas.',
     )
   })
 

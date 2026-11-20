@@ -7,6 +7,7 @@ export const ScheduleGraphSchema = z.object({
   messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
   userId: z.number(),
   condominiumIds: z.array(z.number()),
+  timezoneOffsetMinutes: z.number().int().min(-840).max(840).optional(),
   condominiumIdIntent: z.number().optional(),
   condominiumName: z.string().optional(),
   amenityId: z.number(),

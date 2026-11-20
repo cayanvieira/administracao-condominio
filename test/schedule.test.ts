@@ -29,7 +29,7 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(201)
-    expect(scheduleService.createSchedule).toHaveBeenCalledWith(expect.objectContaining({
+    expect(scheduleService.createScheduleIfAvailable).toHaveBeenCalledWith(expect.objectContaining({
       user_id: 1,
       createdByUserId: 1,
       amenity_id: 1,
@@ -49,11 +49,37 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(201)
-    expect(scheduleService.createSchedule).toHaveBeenCalledWith(expect.objectContaining({
+    expect(scheduleService.createScheduleIfAvailable).toHaveBeenCalledWith(expect.objectContaining({
       user_id: 2,
       createdByUserId: 1,
       amenity_id: 1,
     }))
+  })
+
+  it('rejeita uma reserva quando o intervalo já está ocupado', async () => {
+    scheduleService.createScheduleIfAvailable.mockResolvedValueOnce({ status: 'conflict' })
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/condominium/1/schedules',
+      headers: authHeaders([{ condominiumId: 1, userId: 1, role: 'morador' }]),
+      payload: { amenityId: 1, reservationDate },
+    })
+
+    expect(response.statusCode).toBe(409)
+  })
+
+  it('rejeita uma reserva para um horário que já passou', async () => {
+    scheduleService.createScheduleIfAvailable.mockResolvedValueOnce({ status: 'past' })
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/condominium/1/schedules',
+      headers: authHeaders([{ condominiumId: 1, userId: 1, role: 'morador' }]),
+      payload: { amenityId: 1, reservationDate },
+    })
+
+    expect(response.statusCode).toBe(422)
   })
 
   it('impede o morador de reservar para outro membro', async () => {
@@ -65,7 +91,7 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(403)
-    expect(scheduleService.createSchedule).not.toHaveBeenCalled()
+    expect(scheduleService.createScheduleIfAvailable).not.toHaveBeenCalled()
   })
 
   it('impede reservar para um usuário que não está vinculado ao condomínio', async () => {
@@ -81,7 +107,7 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(scheduleService.createSchedule).not.toHaveBeenCalled()
+    expect(scheduleService.createScheduleIfAvailable).not.toHaveBeenCalled()
   })
 
   it('registra o usuário que editou a reserva', async () => {
@@ -95,8 +121,9 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(200)
-    expect(scheduleService.updateSchedule).toHaveBeenCalledWith(5, {
+    expect(scheduleService.updateScheduleIfAvailable).toHaveBeenCalledWith(5, {
       active: false,
+      timezoneOffsetMinutes: 0,
       editByUserId: 1,
     })
   })
@@ -112,15 +139,16 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(200)
-    expect(scheduleService.updateSchedule).toHaveBeenCalledWith(5, {
+    expect(scheduleService.updateScheduleIfAvailable).toHaveBeenCalledWith(5, {
       active: false,
+      timezoneOffsetMinutes: 0,
       editByUserId: 1,
     })
   })
 
   it('rejeita a edição quando o horário selecionado já está ocupado', async () => {
     scheduleService.findScheduleById.mockResolvedValueOnce({ id: 5, user_id: 1, amenity_id: 1 })
-    scheduleService.findScheduleByDate.mockResolvedValueOnce([{ id: 6 }])
+    scheduleService.updateScheduleIfAvailable.mockResolvedValueOnce({ status: 'conflict' })
 
     const response = await app.inject({
       method: 'PATCH',
@@ -130,6 +158,24 @@ describe('reservas do condomínio', () => {
     })
 
     expect(response.statusCode).toBe(409)
-    expect(scheduleService.updateSchedule).not.toHaveBeenCalled()
+    expect(scheduleService.updateScheduleIfAvailable).toHaveBeenCalledWith(5, {
+      reservation_date: expect.any(Date),
+      timezoneOffsetMinutes: 0,
+      editByUserId: 1,
+    })
+  })
+
+  it('rejeita reativar uma reserva em um horário passado', async () => {
+    scheduleService.findScheduleById.mockResolvedValueOnce({ id: 5, user_id: 1, amenity_id: 1 })
+    scheduleService.updateScheduleIfAvailable.mockResolvedValueOnce({ status: 'past' })
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/condominium/1/schedules/5',
+      headers: authHeaders([{ condominiumId: 1, userId: 1, role: 'morador' }]),
+      payload: { active: true },
+    })
+
+    expect(response.statusCode).toBe(422)
   })
 })

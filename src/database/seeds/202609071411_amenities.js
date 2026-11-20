@@ -7,10 +7,10 @@ export async function seed(knex) {
   }
 
   await knex('amenities').insert([
-    { condominium_id: condominiums[0].id, name: 'Salão de Festas', minimum_hours: 4, can_schedule: true },
-    { condominium_id: condominiums[0].id, name: 'Churrasqueira', minimum_hours: 3, can_schedule: true },
-    { condominium_id: condominiums[0].id, name: 'Academia', minimum_hours: 1, can_schedule: true },
-    { condominium_id: condominiums[1].id, name: 'Piscina', minimum_hours: 2, can_schedule: true },
-    { condominium_id: condominiums[1].id, name: 'Sala de Reuniões', minimum_hours: 2, can_schedule: false }
+    { condominium_id: condominiums[0].id, name: 'Salão de Festas', reservation_hours: 4, can_schedule: true },
+    { condominium_id: condominiums[0].id, name: 'Churrasqueira', reservation_hours: 3, can_schedule: true },
+    { condominium_id: condominiums[0].id, name: 'Academia', reservation_hours: 1, can_schedule: true },
+    { condominium_id: condominiums[1].id, name: 'Piscina', reservation_hours: 2, can_schedule: true },
+    { condominium_id: condominiums[1].id, name: 'Sala de Reuniões', reservation_hours: 2, can_schedule: false }
   ])
 }

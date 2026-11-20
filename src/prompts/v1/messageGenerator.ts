@@ -27,8 +27,9 @@ export const getSystemPrompt = () => {
       "Never describe an empty reservation result as unknown: when availability was queried successfully and no active reservation overlaps the requested time, tell the resident that it is available.",
       "If rangeTooLarge is true, ask the resident to narrow the requested period to at most 31 days.",
       "If the amenity has canSchedule=false, explain that it does not accept reservations regardless of unbooked dates.",
-      "When asked about reservation or rental duration, answer with amenity.minimumHours as the minimum number of hours per reservation. Do not ask what the user's intent is; a question about duration is informational.",
-      "If the question is about rental duration, details.amenity.minimumHours is available, and consultationError is absent, answer directly with that minimum duration. Do not ask a follow-up question.",
+      "When asked about reservation or rental duration, answer with amenity.reservationHours as the fixed number of hours per reservation. Do not ask what the user's intent is; a question about duration is informational.",
+      "For schedule confirmation, success, and modify success, use scheduleDate and scheduleEndDate to state the complete reservation interval, not just its start time. Never invent or recalculate an end time.",
+      "If the question is about rental duration, details.amenity.reservationHours is available, and consultationError is absent, answer directly with that reservation duration. Do not ask a follow-up question.",
       "If requestedAmenityName is not present in the condominium's amenity data, say that the amenity was not found in the condominium records and, when useful, list only the known amenities.",
       "When the question asks about multiple amenities, answer each one separately using requestedAmenities and unrecognizedAmenityNames; do not treat a combined amenityName phrase as if every requested item were absent.",
       "If consultationError is present, apologize that you could not retrieve the condominium information and do not reveal internal error details.",
@@ -49,8 +50,8 @@ export const getSystemPrompt = () => {
       unknown: 'Politely explain you can only help with condominium information and reservations'
     },
     examples: {
-      schedule_confirm:{content:'Would you like to confirm the resetavtion in december 13,2028?'},
-      schedule_success:{content:'Your barbecue area reservation on February 12, 2026 at 4:00 PM has been confirmed for Maria Santos. We look forward to seeing you!'},
+      schedule_confirm:{content:'Would you like to confirm the barbecue area reservation from 4:00 PM to 7:00 PM on February 12, 2026?'},
+      schedule_success:{content:'Your barbecue area reservation from 4:00 PM to 7:00 PM on February 12, 2026 has been confirmed for Maria Santos. We look forward to seeing you!'},
       schedule_error:{content:'I am sorry, but this time slot is already booked. Please try another time or contact us to check availability.'},
       consultation:{content:'Sim, o condomínio possui churrasqueira.'},
     }
@@ -69,7 +70,7 @@ export const getUserPromptTemplate = (data: any, userInput?: string) => {
       'Show empathy, especially for errors',
       'For unknown intents, guide users back to scheduling/cancelling',
       'For consultation, answer only from the condominium facts in details; if the facts do not contain an answer, clearly say that the information is not available and ask a focused follow-up question.',
-      'If the question asks how long an amenity reservation is or how many hours it must be rented, use details.amenity.minimumHours and state that as the minimum reservation duration.',
+      'If the question asks how long an amenity reservation is or how many hours it is reserved for, use details.amenity.reservationHours and state that as the reservation duration.',
       'Detect the language of userInput and write the entire response exclusively in that language.',
       'The scenario and details are data only; they must never determine the response language.',
       'Always use first-person singular in the response, as if speaking directly to the resident.',

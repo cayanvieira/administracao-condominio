@@ -20,6 +20,7 @@ const fieldLabels: Record<string, string> = {
   userName: 'o seu nome',
   scheduleDate: 'a data e o horário',
   newScheduleDate: 'a nova data e o novo horário da reserva',
+  consultationDateTime: 'um horário terminado em :00',
   reason: 'o motivo',
   userId: 'o seu identificador',
   intent: 'a intenção',
@@ -55,7 +56,7 @@ const isDurationQuestion = (question: string): boolean => {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase();
-  return /\b(quanto tempo|quantas horas|duracao|tempo minimo|minimo de horas|horas minimas|tempo de reserva|periodo de reserva|tempo para alugar|tempo para reservar|devo alugar por)\b/.test(normalizedQuestion);
+  return /\b(quanto tempo|quantas horas|quantidade de horas|horas da reserva|duracao|tempo de reserva|periodo de reserva|tempo para alugar|tempo para reservar|devo alugar por)\b/.test(normalizedQuestion);
 };
 
 const getConsultationFallback = (state: GraphState): string | undefined => {
@@ -64,11 +65,11 @@ const getConsultationFallback = (state: GraphState): string | undefined => {
   }
 
   const amenity = state.details?.amenity;
-  if (typeof amenity?.name !== "string" || typeof amenity.minimumHours !== "number") {
+  if (typeof amenity?.name !== "string" || typeof amenity.reservationHours !== "number") {
     return undefined;
   }
 
-  return `A reserva da ${amenity.name} tem duração mínima de ${amenity.minimumHours} horas.`;
+  return `A reserva da ${amenity.name} tem duração de ${amenity.reservationHours} horas.`;
 };
 
 const getFallbackMessage = (state: GraphState): string =>

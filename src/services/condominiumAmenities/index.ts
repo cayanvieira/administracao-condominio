@@ -4,7 +4,9 @@ export type CondominiumAmenity = {
   id: number
   condominium_id: number
   name: string
-  minimum_hours: number
+  reservation_hours: number
+  available_from: string
+  available_until: string
   can_schedule: boolean
   created_at: Date
   updated_at: Date
@@ -12,7 +14,7 @@ export type CondominiumAmenity = {
 
 export type CreateCondominiumAmenity = Pick<
   CondominiumAmenity,
-  'name' | 'minimum_hours' | 'can_schedule'
+  'name' | 'reservation_hours' | 'available_from' | 'available_until' | 'can_schedule'
 >
 export type UpdateCondominiumAmenity = Partial<CreateCondominiumAmenity>
 

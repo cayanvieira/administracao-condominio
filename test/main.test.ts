@@ -27,7 +27,26 @@ describe('rotas básicas e chat', () => {
     })
     expect(response.statusCode).toBe(200)
     expect(scheduleGraph.handleQuestion).toHaveBeenCalledWith(
-      'Quero reservar a piscina', 1, [1], undefined,
+      'Quero reservar a piscina', 1, [1], undefined, 0,
+    )
+  })
+
+  it('encaminha o fuso horário local recebido do navegador ao chat', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/main/chat',
+      headers: authHeaders(),
+      payload: {
+        question: 'Quero reservar a piscina',
+        userId: 1,
+        condominiumIds: [1],
+        timezoneOffsetMinutes: 180,
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(scheduleGraph.handleQuestion).toHaveBeenCalledWith(
+      'Quero reservar a piscina', 1, [1], undefined, 180,
     )
   })
 

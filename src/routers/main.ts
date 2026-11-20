@@ -19,19 +19,27 @@ const Routers = (server: FastifyInstance) => {
             question: { type: "string", minLength: 5 },
             userId: { type: "number", minimum: 1 },
             condominiumIds: { type: "array", items: { type: "number", minimum: 1 }, minItems: 1 },
+            timezoneOffsetMinutes: { type: "integer", minimum: -840, maximum: 840 },
           },
         },
       },
     },
     async function (request, reply) {
       try {
-        const { question, userId, condominiumIds, data } = request.body as {
+        const { question, userId, condominiumIds, data, timezoneOffsetMinutes } = request.body as {
           question: string
           userId: number
           condominiumIds?: number[]
           data: any
+          timezoneOffsetMinutes?: number
         };
-        const response = await Service.ScheduleGraph.handleQuestion(question, userId, condominiumIds, data);
+        const response = await Service.ScheduleGraph.handleQuestion(
+          question,
+          userId,
+          condominiumIds,
+          data,
+          timezoneOffsetMinutes ?? 0,
+        );
         return reply.send(response);
       } catch (error) {
         console.error("Error handling /chat request:", error);
